@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { WebSocketServer } from "ws";
-import { migrate, cleanup, getRoom, createRoom, joinRoom, leaveRoom, startRoom, RoomError } from "./db.mjs";
+import { migrate, cleanup, getRoom, createRoom, joinRoom, leaveRoom, startRoom, normalizeCode, RoomError } from "./db.mjs";
 import { GameSession } from "./game.mjs";
 
 const WS_PATH = "/ws";
@@ -8,6 +8,9 @@ const WS_PATH = "/ws";
 // Bo'sh bo'lsa, istalgan sayt ulanishi mumkin.
 const ALLOWED_ORIGINS = String(process.env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
 const MAX_PLAYER_OPTIONS = [2, 4, 8, 16];
+// Xonada (o'yin boshlanmagan) aloqa uzilsa, o'rin shu vaqt saqlanadi — sahifani yangilash uchun.
+const ROOM_GRACE_MS = 20000;
+const TOKEN_TTL_MS = 1000 * 60 * 60 * 3;
 
 // Xonalar WebSocket serverini mavjud HTTP serverga ulaydi.
 // Faqat /ws yo'lidagi upgrade so'rovlarini oladi, qolganlari (masalan Next HMR) o'zgarishsiz qoladi.
@@ -17,7 +20,23 @@ export async function attachRooms(httpServer) {
 
     const wss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024 });
     const watchers = new Map();
-    const games = new Set();
+    const games = new Map();
+    // Qayta ulanish tokenlari: token → { playerId, createdAt }. Token faqat o'yinchining o'ziga beriladi.
+    const tokens = new Map();
+    const pendingLeaves = new Map();
+
+    function issueToken(ws) {
+        if (!ws.session.token) {
+            ws.session.token = crypto.randomUUID();
+            tokens.set(ws.session.token, { playerId: ws.session.playerId, createdAt: Date.now() });
+        }
+        return ws.session.token;
+    }
+
+    function cancelPendingLeave(playerId) {
+        clearTimeout(pendingLeaves.get(playerId));
+        pendingLeaves.delete(playerId);
+    }
 
     httpServer.on("upgrade", (req, socket, head) => {
         const { pathname } = new URL(req.url, "http://localhost");
@@ -93,8 +112,26 @@ export async function attachRooms(httpServer) {
         if (!code) {
             return;
         }
+        cancelPendingLeave(playerId);
         unwatch(ws);
         publish(code, await leaveRoom(code, playerId));
+    }
+
+    // Aloqa uzilganda darhol chiqarib yubormaymiz: sahifa yangilanishi mumkin.
+    function disconnect(ws) {
+        if (ws.game) {
+            ws.game.disconnect(ws);
+        }
+        const { code, playerId } = ws.session;
+        if (!code) {
+            return;
+        }
+        unwatch(ws);
+        cancelPendingLeave(playerId);
+        pendingLeaves.set(playerId, setTimeout(() => {
+            pendingLeaves.delete(playerId);
+            leaveRoom(code, playerId).then((room) => publish(code, room)).catch((e) => console.error("[rooms:grace leave]", e));
+        }, ROOM_GRACE_MS));
     }
 
     const actions = {
@@ -111,7 +148,7 @@ export async function attachRooms(httpServer) {
                 botCount: int(msg.botCount, 0, 511)
             });
             watch(ws, room.code);
-            return { room, playerId: ws.session.playerId };
+            return { room, playerId: ws.session.playerId, token: issueToken(ws) };
         },
         async find(ws, msg) {
             const room = await getRoom(msg.code);
@@ -125,7 +162,33 @@ export async function attachRooms(httpServer) {
             const room = await joinRoom(msg.code, { id: ws.session.playerId, ...cleanPlayer(msg) });
             watch(ws, room.code);
             publish(room.code, room);
-            return { room, playerId: ws.session.playerId };
+            return { room, playerId: ws.session.playerId, token: issueToken(ws) };
+        },
+        async resume(ws, msg) {
+            const entry = tokens.get(String(msg.token || ""));
+            if (!entry) {
+                throw new RoomError("Sessiya topilmadi");
+            }
+            const code = normalizeCode(msg.code);
+            const { playerId } = entry;
+            const game = games.get(code);
+            const room = await getRoom(code);
+            const inRoom = !!room && room.players.some((p) => p.id === playerId);
+            const inGame = !!game && game.hasMember(playerId);
+            if (!inRoom && !inGame) {
+                throw new RoomError("Xona topilmadi");
+            }
+            await leaveCurrent(ws);
+            cancelPendingLeave(playerId);
+            ws.session.playerId = playerId;
+            ws.session.token = msg.token;
+            if (inRoom) {
+                watch(ws, code);
+            }
+            if (inGame) {
+                ws.afterReply = game.reattach(playerId, ws);
+            }
+            return { room: inGame ? game.room : room, playerId, inGame };
         },
         async leave(ws) {
             await leaveCurrent(ws);
@@ -153,12 +216,12 @@ export async function attachRooms(httpServer) {
         room.players.forEach((p, index) => {
             for (const ws of sockets) {
                 if (ws.session.playerId === p.id) {
-                    members.push({ ws, index });
+                    members.push({ ws, index, playerId: p.id });
                 }
             }
         });
-        const session = new GameSession(room.code, members, (s) => games.delete(s));
-        games.add(session);
+        const session = new GameSession(room, members, (s) => games.get(s.code) === s && games.delete(s.code));
+        games.set(room.code, session);
     }
 
     wss.on("connection", (ws) => {
@@ -188,6 +251,11 @@ export async function attachRooms(httpServer) {
             }
             try {
                 reply({ ok: true, data: await action(ws, msg) });
+                if (ws.afterReply) {
+                    const after = ws.afterReply;
+                    ws.afterReply = null;
+                    after();
+                }
             } catch (e) {
                 if (!(e instanceof RoomError)) {
                     console.error(`[rooms:${msg.action}]`, e);
@@ -196,7 +264,7 @@ export async function attachRooms(httpServer) {
             }
         });
         ws.on("close", () => {
-            leaveCurrent(ws).catch((e) => console.error("[rooms:leave on close]", e));
+            disconnect(ws);
         });
     });
 
@@ -212,14 +280,23 @@ export async function attachRooms(httpServer) {
     }, 30000);
 
     const janitor = setInterval(() => {
+        const now = Date.now();
+        for (const [token, entry] of tokens) {
+            if (now - entry.createdAt > TOKEN_TTL_MS) {
+                tokens.delete(token);
+            }
+        }
         cleanup().catch((e) => console.error("[rooms:cleanup]", e));
     }, 10 * 60 * 1000);
 
     return function close() {
         clearInterval(heartbeat);
         clearInterval(janitor);
-        for (const game of games) {
+        for (const game of games.values()) {
             game.stop();
+        }
+        for (const timer of pendingLeaves.values()) {
+            clearTimeout(timer);
         }
         for (const ws of wss.clients) {
             ws.terminate();

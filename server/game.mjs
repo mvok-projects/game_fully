@@ -7,6 +7,8 @@ export const TURN_MS = 7 * 56;
 const START_DELAY_MS = 1500;
 const MAX_ACTIONS_PER_TURN = 40;
 const MAX_PLAYERS = 512;
+// Uzilgan o'yinchi shu vaqt ichida qaytmasa, "o'yindan chiqdi" deb e'lon qilinadi.
+export const RECONNECT_GRACE_MS = 30000;
 
 // Harakat turi → argument bitlari (mijoz paketi va turn yozuvida bir xil).
 const ACTION_ARG_BITS = { 0: 22, 1: 20, 2: 19, 3: 37, 4: 26, 5: 10, 6: 10, 7: 1, 8: 0, 10: 42 };
@@ -64,12 +66,15 @@ class BitWriter {
 }
 
 export class GameSession {
-    // members: [{ ws, index }] — index o'yinchining o'yindagi raqami (0..n-1).
-    constructor(code, members, onEnd) {
-        this.code = code;
+    // members: [{ ws, index, playerId }] — index o'yinchining o'yindagi raqami (0..n-1).
+    // room — o'yin boshlangan paytdagi xona ma'lumoti (qayta ulanganda mijozga beriladi).
+    constructor(room, members, onEnd) {
+        this.code = room.code;
+        this.room = room;
         this.members = members;
         this.byWs = new Map(members.map((m) => [m.ws, m]));
         this.onEnd = onEnd;
+        this.turnLog = [];
         this.entries = [];
         this.counts = new Map();
         this.turn = 0;
@@ -77,6 +82,8 @@ export class GameSession {
         this.ended = false;
         for (const m of members) {
             m.connected = true;
+            m.gone = false;
+            m.graceTimer = null;
             m.ws.game = this;
         }
         this.startTimer = setTimeout(() => {
@@ -166,6 +173,7 @@ export class GameSession {
         this.counts.clear();
         this.turn++;
         const packet = w.bytes();
+        this.turnLog.push(packet);
         for (const m of this.members) {
             if (m.connected) {
                 this.send(m.ws, packet);
@@ -179,17 +187,70 @@ export class GameSession {
         }
     }
 
+    hasMember(playerId) {
+        return this.members.some((m) => m.playerId === playerId && !m.gone);
+    }
+
+    // Aloqa uzildi (masalan sahifa yangilandi): o'rin RECONNECT_GRACE_MS davomida saqlanadi.
+    disconnect(ws) {
+        const member = this.byWs.get(ws);
+        if (!member || !member.connected) {
+            return;
+        }
+        this.detach(member);
+        member.graceTimer = setTimeout(() => this.drop(member), RECONNECT_GRACE_MS);
+    }
+
+    // O'yinchi o'zi chiqdi: darhol "o'yindan chiqdi".
     leave(ws) {
         const member = this.byWs.get(ws);
         if (!member || !member.connected) {
             return;
         }
+        this.detach(member);
+        this.drop(member);
+    }
+
+    detach(member) {
         member.connected = false;
-        ws.game = null;
+        this.byWs.delete(member.ws);
+        if (member.ws.game === this) {
+            member.ws.game = null;
+        }
+    }
+
+    drop(member) {
+        clearTimeout(member.graceTimer);
+        if (member.gone) {
+            return;
+        }
+        member.gone = true;
         this.entries.push({ id: ACTION_PLAYER_LEFT, player: member.index, args: [] });
-        if (!this.members.some((m) => m.connected)) {
+        if (this.members.every((m) => m.gone)) {
             this.stop();
         }
+    }
+
+    // Qayta ulangan o'yinchini o'z o'rniga qaytaradi. Qaytgan funksiya o'tgan barcha turnlarni yuboradi
+    // (javobdan keyin chaqiriladi, shunda mijoz avval o'yinni boshlab oladi).
+    reattach(playerId, ws) {
+        const member = this.members.find((m) => m.playerId === playerId && !m.gone);
+        if (!member) {
+            return null;
+        }
+        clearTimeout(member.graceTimer);
+        if (member.connected && member.ws !== ws) {
+            this.detach(member);
+        }
+        member.ws = ws;
+        member.connected = true;
+        this.byWs.set(ws, member);
+        ws.game = this;
+        return () => {
+            for (const packet of this.turnLog) {
+                this.send(ws, packet);
+            }
+        };
     }
 
     stop() {
@@ -200,6 +261,7 @@ export class GameSession {
         clearTimeout(this.startTimer);
         clearInterval(this.timer);
         for (const m of this.members) {
+            clearTimeout(m.graceTimer);
             if (m.ws.game === this) {
                 m.ws.game = null;
             }

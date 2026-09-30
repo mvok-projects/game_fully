@@ -181,6 +181,7 @@
     var bv;
     var bw;
     var aRoomUI = null;
+    var aResume = null;
     function bx(by) {
         if (m && !by) {
             return;
@@ -333,6 +334,10 @@
             u.v(5, 5);
             bL.dt();
             i.dv();
+            aResume = new GameResume();
+            setTimeout(function() {
+                aResume.boot();
+            }, 0);
         }
         bz();
         dj();
@@ -9366,6 +9371,9 @@
                 a1.a2.setState(1);
             }
             this.a6k = 0;
+            if (aResume) {
+                aResume.started();
+            }
         }
         ;
         function a6w() {
@@ -12960,6 +12968,11 @@
         var aCf = 1;
         var aCg = 1;
         var aCh = "";
+        var lbTitleFont;
+        var lbScoreFont;
+        var lbBadgeFont;
+        var lbDotGap = 0;
+        var LB_MEDALS = ["#f5c542", "#cfd6e0", "#d08c5b"];
         this.dk = function() {
             var aC;
             u.z.uS[0] = 0;
@@ -12985,7 +12998,7 @@
             }
             this.resize(true);
             aCU = new Uint16Array(aE.fW);
-            var aCi = Math.floor(aCE - aCS - aCR - aCL);
+            var aCi = Math.floor(aCE - aCS - aCR - aCL - lbDotGap);
             aCV = new Array(aE.fW);
             aCK.font = aCH;
             for (aC = aE.fW - 1; aC >= 0; aC--) {
@@ -13023,6 +13036,10 @@
             aCR = Math.floor(0.04 * aCE);
             aCS = Math.floor((a1.a2.ik() ? 0.195 : 0.18) * aCE);
             aCL = Math.floor(aCK.measureText("00920600").width);
+            lbTitleFont = bD.sK.u8(1, Math.floor(0.34 * aCG));
+            lbScoreFont = bD.sK.u8(1, Math.floor(0.86 * aCf));
+            lbBadgeFont = bD.sK.u8(1, Math.floor(0.64 * aCf));
+            lbDotGap = Math.floor(0.7 * aCf);
             aCK.font = aCF;
             aCT = aCE - aCR;
             if (!dk) {
@@ -13032,7 +13049,7 @@
                 }
                 aCj();
             }
-            aCh = bD.ou.a5J(L(117), aCF, 0.96 * aCE);
+            aCh = bD.ou.a5J(L(117), lbTitleFont, 0.8 * aCE);
         }
         ;
         this.aC6 = function() {
@@ -13046,91 +13063,150 @@
             }
         }
         ;
+        function lbRound(x, y, w, h, r) {
+            aCK.beginPath();
+            aCK.moveTo(x + r, y);
+            aCK.arcTo(x + w, y, x + w, y + h, r);
+            aCK.arcTo(x + w, y + h, x, y + h, r);
+            aCK.arcTo(x, y + h, x, y, r);
+            aCK.arcTo(x, y, x + w, y, r);
+            aCK.closePath();
+        }
+        function lbRowY(xu) {
+            return Math.floor(aCN + aCG + (xu + 0.5) * aCQ);
+        }
+        function lbSpacing(px) {
+            if ("letterSpacing" in aCK) {
+                aCK.letterSpacing = px + "px";
+            }
+        }
+        function lbPlayerColor(player) {
+            if (aE.iT) {
+                return bj.aCq[bj.aCr[player]];
+            }
+            if (!ad.aJA || ad.aJA[player] === undefined) {
+                return "rgb(140,150,170)";
+            }
+            return "rgb(" + ad.aJA[player] + "," + ad.aJB[player] + "," + ad.aJC[player] + ")";
+        }
         function aCj() {
             var fs;
+            var r = Math.max(4, Math.floor(0.045 * aCE));
             aCK.clearRect(0, 0, aCE, aA9);
-            aCK.fillStyle = aCe ? bE.qI : bE.qE;
+            aCK.save();
+            lbRound(0.5, 0.5, aCE - 1, aA9 - 1, r);
+            aCK.clip();
+            var g = aCK.createLinearGradient(0, 0, 0, aA9);
+            g.addColorStop(0, "rgba(24,28,42,0.93)");
+            g.addColorStop(1, "rgba(11,13,21,0.93)");
+            aCK.fillStyle = g;
+            aCK.fillRect(0, 0, aCE, aA9);
+            aCK.fillStyle = aCe ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.035)";
             aCK.fillRect(0, 0, aCE, aCP);
-            aCK.fillStyle = bE.pK;
-            aCK.fillRect(0, aCP, aCE, aA9 - aCP);
-            if (kf[aE.fJ] >= position) {
-                aCl(kf[aE.fJ] - position, bE.pn);
-            }
-            if (kf[aE.fJ] !== 0 && position === 0) {
-                aCl(0, bE.qM);
+            aCK.fillStyle = "rgba(255,255,255,0.09)";
+            aCK.fillRect(0, aCP, aCE, 1);
+            var h8 = kf[aE.fJ] < position + aCI - 1 ? 1 : 2;
+            if (position === 0 && kf[aE.fJ] !== 0) {
+                aCl(0, "rgba(245,197,66,0.08)");
             }
             if (aCZ !== -1) {
-                aCl(aCZ, bE.pP);
+                aCl(aCZ, "rgba(255,255,255,0.07)");
             }
-            aCK.fillStyle = bE.pO;
-            aCK.fillRect(0, aCP, aCE, 1);
-            aCK.fillRect(0, 0, aCE, bf.a1E);
-            aCK.fillRect(0, 0, bf.a1E, aA9);
-            aCK.fillRect(aCE - bf.a1E, 0, bf.a1E, aA9);
-            aCK.fillRect(0, aA9 - bf.a1E, aCE, bf.a1E);
-            aCK.font = aCF;
+            if (kf[aE.fJ] >= position) {
+                aCl(kf[aE.fJ] - position, "rgba(46,204,113,0.17)", "#2ecc71");
+            }
+            if (h8 === 2) {
+                var dy = Math.floor(lbRowY(aCI - 1) - 0.5 * aCQ);
+                aCK.fillStyle = "rgba(255,255,255,0.14)";
+                for (var dx = Math.floor(0.05 * aCE); dx < 0.95 * aCE; dx += 6) {
+                    aCK.fillRect(dx, dy, 3, 1);
+                }
+            }
+            aCK.font = lbTitleFont;
             bD.sK.textBaseline(aCK, 1);
             bD.sK.textAlign(aCK, 1);
-            aCK.fillText(aCh, Math.floor(aCE / 2), Math.floor(aCN + aCG / 2));
-            var h8 = kf[aE.fJ] < position + aCI - 1 ? 1 : 2;
-            aCK.font = aCH;
-            bD.sK.textAlign(aCK, 0);
+            lbSpacing(Math.max(1, Math.floor(0.012 * aCE)));
+            aCK.fillStyle = "rgba(255,255,255,0.55)";
+            aCK.fillText("🏆", Math.floor(aCE / 2 - 0.5 * aCK.measureText(aCh).width - 0.5 * aCG), Math.floor(aCP / 2));
+            aCK.fillStyle = "rgba(255,255,255,0.94)";
+            aCK.fillText(aCh, Math.floor(aCE / 2 + 0.12 * aCG), Math.floor(aCP / 2));
+            lbSpacing(0);
             for (fs = aCI - h8; fs >= 0; fs--) {
-                aCm(mV[fs + position]);
                 aCn(fs, fs + position, mV[fs + position]);
-            }
-            bD.sK.textAlign(aCK, 2);
-            for (fs = aCI - h8; fs >= 0; fs--) {
-                aCm(mV[fs + position]);
                 aCo(fs, mV[fs + position]);
             }
             if (h8 === 2) {
-                aCm(aE.fJ);
-                bD.sK.textAlign(aCK, 0);
                 aCn(aCI - 1, kf[aE.fJ], aE.fJ);
-                bD.sK.textAlign(aCK, 2);
                 aCo(aCI - 1, aE.fJ);
             }
-            if (position === 0) {
-                aCp();
-            }
+            aCK.restore();
+            lbRound(0.5, 0.5, aCE - 1, aA9 - 1, r);
+            aCK.strokeStyle = "rgba(255,255,255,0.16)";
+            aCK.lineWidth = 1;
+            aCK.stroke();
         }
         function aCm(player) {
             if (aE.iT) {
                 aCK.fillStyle = bj.aCq[bj.aCr[player]];
             }
         }
-        function aCl(aC, aCs) {
-            aCK.fillStyle = aCs;
+        function aCl(aC, aCs, accent) {
             aC = aC > aCI - 1 ? aCI - 1 : aC;
-            var aCt = Math.floor((aC === aCI - 1 ? 2 : aC === 0 ? 1.15 : 1) * aCQ);
-            aCt = aC === aCI - 2 ? Math.floor(aCP + 9.15 * aCQ) - Math.floor(aCP + 8.15 * aCQ) : aCt;
-            aCK.fillRect(0, Math.floor(aCP + (aC + (aC === 0 ? 0 : 0.15)) * aCQ), aCE, aCt);
+            var inset = Math.max(2, Math.floor(0.018 * aCE));
+            var top = Math.floor(lbRowY(aC) - 0.5 * aCQ) + 1;
+            var h = Math.floor(aCQ) - 2;
+            aCK.fillStyle = aCs;
+            lbRound(inset, top, aCE - 2 * inset, h, Math.max(2, Math.floor(0.22 * aCQ)));
+            aCK.fill();
+            if (accent) {
+                aCK.fillStyle = accent;
+                aCK.fillRect(inset, top + Math.floor(0.2 * h), Math.max(2, Math.floor(0.012 * aCE)), Math.ceil(0.6 * h));
+            }
         }
-        function aCp() {
-            var a7z = 0.7 * aCQ / ac.get(4).height;
-            aCK.setTransform(a7z, 0, 0, a7z, Math.floor(aCR + 0.58 * aCQ + 0.5 * a7z * ac.get(4).width), Math.floor(aCN + aCG + 0.4 * aCQ));
-            aCK.imageSmoothingEnabled = true;
-            aCK.drawImage(ac.get(4), -Math.floor(ac.get(4).width / 2), -Math.floor(ac.get(4).height / 2));
-            aCK.setTransform(1, 0, 0, 1, 0, 0);
-        }
+        function aCp() {}
         function aCn(xu, a5y, aC) {
-            aCK.fillText(aCV[a5y], aCR, Math.floor(aCN + aCG + (xu + 0.5) * aCQ));
-            if (ah.a5a[aC] === 1) {
-                aCK.font = S[98] + aCH;
-            }
-            var fi = Math.floor(aCN + aCG + (xu + 0.5) * aCQ);
-            aCK.fillText(ah.a0j[aC], aCS, fi);
-            if (ah.a5a[aC] !== 0) {
+            var fi = lbRowY(xu);
+            var isMe = aC === aE.fJ;
+            bD.sK.textBaseline(aCK, 1);
+            if (a5y < 3) {
+                var br = Math.floor(0.39 * aCQ);
+                var bx = aCR + br;
+                aCK.fillStyle = LB_MEDALS[a5y];
+                aCK.beginPath();
+                aCK.arc(bx, fi, br, 0, 2 * Math.PI);
+                aCK.fill();
+                aCK.font = lbBadgeFont;
+                bD.sK.textAlign(aCK, 1);
+                aCK.fillStyle = "rgba(20,22,30,0.92)";
+                aCK.fillText(String(a5y + 1), bx, fi + 1);
+            } else {
                 aCK.font = aCH;
+                bD.sK.textAlign(aCK, 0);
+                aCK.fillStyle = "rgba(255,255,255,0.45)";
+                aCK.fillText(String(a5y + 1), aCR, fi);
             }
-            if (aC < aE.ku && ah.a5a[aC] !== 2) {
-                return;
-            }
-            aCK.fillRect(aCS, fi + 0.35 * aCf, aCU[aC], Math.max(1, 0.1 * aCf));
+            var dr = Math.max(3, Math.floor(0.25 * aCf));
+            aCK.fillStyle = lbPlayerColor(aC);
+            aCK.beginPath();
+            aCK.arc(aCS + dr, fi, dr, 0, 2 * Math.PI);
+            aCK.fill();
+            aCK.strokeStyle = "rgba(255,255,255,0.35)";
+            aCK.lineWidth = 1;
+            aCK.stroke();
+            aCK.font = (isMe ? S[40] + " " : ah.a5a[aC] === 1 ? S[98] : "") + aCH;
+            bD.sK.textAlign(aCK, 0);
+            aCK.fillStyle = isMe ? "#ffffff" : aC < aE.ku ? "rgba(255,255,255,0.92)" : "rgba(214,220,232,0.72)";
+            aCm(aC);
+            aCK.fillText(ah.a0j[aC], aCS + lbDotGap, fi);
+            aCK.font = aCH;
         }
         function aCo(xu, aC) {
-            aCK.fillText(ah.hN[aC], aCT, Math.floor(aCN + aCG + (xu + 0.5) * aCQ));
+            aCK.font = lbScoreFont;
+            bD.sK.textBaseline(aCK, 1);
+            bD.sK.textAlign(aCK, 2);
+            aCK.fillStyle = aC === aE.fJ ? "#7dffb0" : "rgba(255,255,255,0.9)";
+            aCK.fillText(bD.tI.a1X(ah.hN[aC]), aCT, lbRowY(xu));
+            aCK.font = aCH;
         }
         this.ee = function() {
             aCu();
@@ -20648,6 +20724,199 @@
         }
         ;
     }
+    // Sahifa yangilanganda o'yinni tiklash.
+    // Yakka o'yin: ssenariy + dvigatelning replay yozuvi (bC.re) sessionStorage'da saqlanadi,
+    // qayta yuklanganda o'sha ssenariy boshlanib, yozilgan harakatlar bilan o'sha tikgacha tez aylantiriladi.
+    // Xona / multiplayer o'yin: RoomUI serverga qayta ulanadi (token orqali).
+    function GameResume() {
+        var KEY = "tt_resume_sp";
+        var scenario = null;
+        var active = false;
+        var restoring = false;
+        function store() {
+            try {
+                return window.sessionStorage;
+            } catch (e) {
+                return null;
+            }
+        }
+        function clear() {
+            var st = store();
+            if (st) {
+                try {
+                    st.removeItem(KEY);
+                } catch (e) {}
+            }
+        }
+        function save() {
+            if (!active || restoring) {
+                return;
+            }
+            if (aE.a2G === 2) {
+                active = false;
+                clear();
+                return;
+            }
+            if (aE.a2G !== 1 || aE.hi || !aE.lE || ab.a3P() !== 8) {
+                return;
+            }
+            var st = store();
+            if (!st) {
+                return;
+            }
+            var re = bC.re;
+            try {
+                st.setItem(KEY, JSON.stringify({
+                    v: 1,
+                    scenario: scenario,
+                    a6k: aE.a6k,
+                    tick: bi.kr(),
+                    re: [re.aXu, re.aXv, re.aXw, re.aXx, re.aXy, re.aXz]
+                }));
+            } catch (e) {}
+        }
+        setInterval(save, 2000);
+        window.addEventListener("pagehide", save);
+        document.addEventListener("visibilitychange", function() {
+            if (document.visibilityState === "hidden") {
+                save();
+            }
+        });
+        this.started = function() {
+            if (restoring) {
+                return;
+            }
+            active = false;
+            scenario = null;
+            clear();
+            if (aE.hi || !aE.lE || aE.data.mapType === 2) {
+                return;
+            }
+            try {
+                scenario = bC.a6y.a1i();
+            } catch (e) {
+                scenario = null;
+            }
+            active = !!scenario;
+        }
+        ;
+        this.ended = function() {
+            active = false;
+            scenario = null;
+            clear();
+        }
+        ;
+        this.boot = function() {
+            if (resumeSinglePlayer()) {
+                return;
+            }
+            try {
+                if (store() && store().getItem("tt_room")) {
+                    (aRoomUI || (aRoomUI = new RoomUI())).resume();
+                }
+            } catch (e) {}
+        }
+        ;
+        function overlay() {
+            var ov = document.createElement(S[0]);
+            ov.style.cssText = "position:fixed;inset:0;z-index:1001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.78);color:#fff;font:700 clamp(1.1em,3.5vw,1.6em) system-ui,sans-serif;text-align:center;padding:16px";
+            document.body.appendChild(ov);
+            return ov;
+        }
+        function resumeSinglePlayer() {
+            var st = store();
+            var data = null;
+            try {
+                data = st && JSON.parse(st.getItem(KEY) || "null");
+            } catch (e) {
+                data = null;
+            }
+            if (!data || data.v !== 1 || !data.scenario || !data.re) {
+                return false;
+            }
+            restoring = true;
+            if (!bC.aLJ.yY(data.scenario, 1)) {
+                restoring = false;
+                clear();
+                u.v(5, 5);
+                return false;
+            }
+            var sC = aE.data;
+            sC.isReplay = 0;
+            sC.canvas = null;
+            bC.re.dk();
+            ab.aIa();
+            aE.a6i.a77();
+            aE.a6m();
+            aE.a6k = data.a6k;
+            scenario = data.scenario;
+            var aeJ = data.re[0], gI = data.re[1], gK = data.re[2], gM = data.re[3], aeK = data.re[4], aeL = data.re[5];
+            var g = 0, pos = 0, run = 0, target = data.tick;
+            var ticker = bi.a2Q;
+            var realEe = ticker.ee;
+            ticker.ee = function() {}
+            ;
+            var ov = overlay();
+            ov.textContent = "⏳ Oʻyin tiklanmoqda...";
+            function applyGroup() {
+                var lp = aeL[g];
+                for (var aC = pos; aC < pos + lp; aC++) {
+                    bB.qi.rT(aeJ[aC], gI[aC], gK[aC], gM[aC]);
+                }
+                pos += lp;
+                g++;
+            }
+            function step() {
+                if (g >= aeL.length || aE.a2G === 2) {
+                    return false;
+                }
+                if (!aeK[g]) {
+                    if (++run >= aeL[g]) {
+                        g++;
+                        run = 0;
+                    }
+                } else {
+                    applyGroup();
+                }
+                n8();
+                return true;
+            }
+            function finish() {
+                if (g < aeL.length && aeK[g] && aE.a2G !== 2) {
+                    applyGroup();
+                }
+                ticker.ee = realEe;
+                restoring = false;
+                active = true;
+                be.render();
+                ag.nG(true);
+                aW.nG(true, true);
+                bi.ds = true;
+                if (ov.parentNode) {
+                    ov.parentNode.removeChild(ov);
+                }
+                save();
+            }
+            function chunk() {
+                var t0 = performance.now();
+                while (bi.kr() < target && performance.now() - t0 < 40) {
+                    if (!step()) {
+                        target = bi.kr();
+                        break;
+                    }
+                }
+                be.render();
+                if (bi.kr() < target) {
+                    ov.textContent = "⏳ Oʻyin tiklanmoqda... " + Math.floor(100 * bi.kr() / Math.max(1, target)) + "%";
+                    setTimeout(chunk, 0);
+                    return;
+                }
+                finish();
+            }
+            chunk();
+            return true;
+        }
+    }
     function RoomService() {
         // Xonalar serveri (server/rooms.mjs): NEXT_PUBLIC_ROOMS_WS_URL berilgan bo'lsa o'sha manzilga,
         // aks holda shu sayt manzilidagi /ws ga ulanadi. Xonalar Neon PostgreSQL'da saqlanadi.
@@ -20819,6 +21088,16 @@
             return request("start");
         }
         ;
+        this.resume = function(code, token) {
+            return request("resume", {
+                code: code,
+                token: token
+            }).then(function(res) {
+                cache[res.room.code] = res.room;
+                return res;
+            });
+        }
+        ;
         this.onGamePacket = function(fn) {
             packetHandler = fn;
         }
@@ -20853,11 +21132,27 @@
         var selectedMap = 0;
         var maxPlayers = 8;
         var botCount = 200;
-        window.addEventListener("beforeunload", function() {
-            if (session) {
-                service.leave(session.code, session.playerId);
+        // Sahifa yangilanganda xonaga/o'yinga qaytish uchun (faqat shu tab uchun).
+        function saveRoom(code, token) {
+            try {
+                sessionStorage.setItem("tt_room", JSON.stringify({
+                    code: code,
+                    token: token
+                }));
+            } catch (e) {}
+        }
+        function loadRoom() {
+            try {
+                return JSON.parse(sessionStorage.getItem("tt_room") || "null");
+            } catch (e) {
+                return null;
             }
-        });
+        }
+        function clearRoom() {
+            try {
+                sessionStorage.removeItem("tt_room");
+            } catch (e) {}
+        }
         function injectStyle() {
             if (document.getElementById("tr-room-style")) {
                 return;
@@ -21035,6 +21330,7 @@
                         code: res.room.code,
                         playerId: res.playerId
                     };
+                    saveRoom(res.room.code, res.token);
                     showRoom();
                 }, function(e) {
                     createBtn.disabled = false;
@@ -21078,6 +21374,7 @@
                         code: res.room.code,
                         playerId: res.playerId
                     };
+                    saveRoom(res.room.code, res.token);
                     showRoom();
                 }, function(e) {
                     err.textContent = e.message;
@@ -21184,6 +21481,7 @@
                 var s = session;
                 stopWatching();
                 session = null;
+                clearRoom();
                 close();
                 service.leave(s.code, s.playerId);
             });
@@ -21194,6 +21492,7 @@
                 if (!r) {
                     stopWatching();
                     session = null;
+                    clearRoom();
                     open("🏠 Xona yopildi", [el("p", "tr-wait", "Xona yaratuvchisi xonani yopdi.")], [button("⬅️ Orqaga", function() {
                         close();
                     })]);
@@ -21204,6 +21503,7 @@
                 })) {
                     stopWatching();
                     session = null;
+                    clearRoom();
                     close();
                     return;
                 }
@@ -21272,6 +21572,7 @@
                 };
             } else {
                 aE.a6i.a7A();
+                clearRoom();
             }
             ab.aIa();
             aE.a6i.a77();
@@ -21321,7 +21622,43 @@
                 return;
             }
             game = null;
+            clearRoom();
             service.leave();
+        }
+        ;
+        this.resume = function() {
+            var saved = loadRoom();
+            if (!saved || !saved.code || !saved.token) {
+                clearRoom();
+                return;
+            }
+            open("🔄 Qayta ulanmoqda", [el("p", "tr-wait", "⏳ Xonaga qayta ulanmoqda...")], [button("⬅️ Bekor qilish", function() {
+                clearRoom();
+                close();
+                service.leave();
+            })]);
+            service.resume(saved.code, saved.token).then(function(res) {
+                session = {
+                    code: res.room.code,
+                    playerId: res.playerId
+                };
+                if (res.inGame) {
+                    session = null;
+                    close();
+                    startGame(res.room, res.playerId);
+                } else if (res.room.status === "waiting") {
+                    showRoom();
+                } else {
+                    session = null;
+                    clearRoom();
+                    close();
+                }
+            }, function(e) {
+                clearRoom();
+                open("🏠 Xona topilmadi", [el("p", "tr-wait", "Xonaga qayta ulanib boʻlmadi: " + e.message)], [button("⬅️ Orqaga", function() {
+                    close();
+                })]);
+            });
         }
         ;
     }
@@ -26871,6 +27208,9 @@
         this.aW0 = function(oN, aVy) {}
         ;
         this.a6z = function() {
+            if (aResume) {
+                aResume.ended();
+            }
             if (aRoomUI) {
                 aRoomUI.gameEnded();
             }
