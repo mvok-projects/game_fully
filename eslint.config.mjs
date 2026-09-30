@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Obfuskatsiya qilingan o'yin dvigateli (qo'lda yozilmagan kod).
+    "public/game/**",
   ]),
 ]);
 

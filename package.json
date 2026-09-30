@@ -1,17 +1,19 @@
 {
-  "name": "web",
+  "name": "territorial-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node --env-file-if-exists=.env server.mjs",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production node --env-file-if-exists=.env server.mjs",
     "lint": "eslint"
   },
   "dependencies": {
     "next": "16.3.7",
+    "pg": "^8.23.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@types/node": "^20",
