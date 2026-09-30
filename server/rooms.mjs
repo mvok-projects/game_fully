@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { WebSocketServer } from "ws";
 import { migrate, cleanup, getRoom, createRoom, joinRoom, leaveRoom, startRoom, RoomError } from "./db.mjs";
+import { GameSession } from "./game.mjs";
 
 const WS_PATH = "/ws";
 const MAX_PLAYER_OPTIONS = [2, 4, 8, 16];
@@ -13,6 +14,7 @@ export async function attachRooms(httpServer) {
 
     const wss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024 });
     const watchers = new Map();
+    const games = new Set();
 
     httpServer.on("upgrade", (req, socket, head) => {
         const { pathname } = new URL(req.url, "http://localhost");
@@ -64,7 +66,8 @@ export async function attachRooms(httpServer) {
     function cleanPlayer(msg) {
         const name = String(msg.name || "").trim().slice(0, 20) || "Oʻyinchi";
         const color = /^rgb\(\d{1,3},\s?\d{1,3},\s?\d{1,3}\)$/.test(String(msg.color)) ? String(msg.color) : "rgb(120,120,255)";
-        return { name, color };
+        const colorCode = Number.isInteger(msg.colorCode) && msg.colorCode >= 0 && msg.colorCode < 262144 ? msg.colorCode : 0;
+        return { name, color, colorCode };
     }
 
     function int(value, min, max) {
@@ -76,6 +79,9 @@ export async function attachRooms(httpServer) {
     }
 
     async function leaveCurrent(ws) {
+        if (ws.game) {
+            ws.game.leave(ws);
+        }
         const { code, playerId } = ws.session;
         if (!code) {
             return;
@@ -123,11 +129,30 @@ export async function attachRooms(httpServer) {
             if (!code) {
                 throw new RoomError("Siz xonada emassiz");
             }
+            const wasWaiting = (await getRoom(code))?.status === "waiting";
             const room = await startRoom(code, playerId);
+            if (wasWaiting && room.players.length > 1) {
+                startGame(room);
+            }
             publish(code, room);
             return room;
         }
     };
+
+    // O'yinchilar indeksi xonaga qo'shilish tartibida (0..n-1), mijozlar ham xuddi shu tartibdan foydalanadi.
+    function startGame(room) {
+        const sockets = watchers.get(room.code) || new Set();
+        const members = [];
+        room.players.forEach((p, index) => {
+            for (const ws of sockets) {
+                if (ws.session.playerId === p.id) {
+                    members.push({ ws, index });
+                }
+            }
+        });
+        const session = new GameSession(room.code, members, (s) => games.delete(s));
+        games.add(session);
+    }
 
     wss.on("connection", (ws) => {
         ws.session = { playerId: crypto.randomUUID(), code: null };
@@ -135,7 +160,13 @@ export async function attachRooms(httpServer) {
         ws.on("pong", () => {
             ws.isAlive = true;
         });
-        ws.on("message", async (raw) => {
+        ws.on("message", async (raw, isBinary) => {
+            if (isBinary) {
+                if (ws.game) {
+                    ws.game.handlePacket(ws, new Uint8Array(raw));
+                }
+                return;
+            }
             let msg;
             try {
                 msg = JSON.parse(raw);
@@ -180,6 +211,9 @@ export async function attachRooms(httpServer) {
     return function close() {
         clearInterval(heartbeat);
         clearInterval(janitor);
+        for (const game of games) {
+            game.stop();
+        }
         for (const ws of wss.clients) {
             ws.terminate();
         }

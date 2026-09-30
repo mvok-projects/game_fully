@@ -1,6 +1,6 @@
 import pg from "pg";
 
-const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const ALPHABET = "0123456789";
 const ROOM_TTL_HOURS = 2;
 
 export const pool = new pg.Pool({
@@ -33,6 +33,7 @@ export async function migrate() {
             joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
             PRIMARY KEY (room_code, player_id)
         );
+        ALTER TABLE room_players ADD COLUMN IF NOT EXISTS color_code INTEGER NOT NULL DEFAULT 0;
     `);
 }
 
@@ -53,7 +54,7 @@ function newCode() {
 }
 
 export function normalizeCode(code) {
-    return String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    return String(code || "").replace(/[^0-9]/g, "").slice(0, 6);
 }
 
 async function readRoom(client, code) {
@@ -63,7 +64,7 @@ async function readRoom(client, code) {
     }
     const room = r.rows[0];
     const p = await client.query(
-        `SELECT player_id, name, color, is_host FROM room_players WHERE room_code = $1 ORDER BY joined_at, player_id`,
+        `SELECT player_id, name, color, color_code, is_host FROM room_players WHERE room_code = $1 ORDER BY joined_at, player_id`,
         [code]
     );
     return {
@@ -76,7 +77,7 @@ async function readRoom(client, code) {
         botCount: room.bot_count,
         seed: room.seed,
         createdAt: room.created_at.getTime(),
-        players: p.rows.map((row) => ({ id: row.player_id, name: row.name, color: row.color, host: row.is_host }))
+        players: p.rows.map((row) => ({ id: row.player_id, name: row.name, color: row.color, colorCode: row.color_code, host: row.is_host }))
     };
 }
 
@@ -110,8 +111,8 @@ export async function createRoom(player, opts) {
                     [code, player.id, opts.mapIndex, opts.mapName, opts.maxPlayers, opts.botCount, Math.floor(Math.random() * 65536)]
                 );
                 await c.query(
-                    `INSERT INTO room_players (room_code, player_id, name, color, is_host) VALUES ($1, $2, $3, $4, true)`,
-                    [code, player.id, player.name, player.color]
+                    `INSERT INTO room_players (room_code, player_id, name, color, color_code, is_host) VALUES ($1, $2, $3, $4, $5, true)`,
+                    [code, player.id, player.name, player.color, player.colorCode]
                 );
                 return readRoom(c, code);
             });
@@ -138,8 +139,8 @@ export function joinRoom(code, player) {
             throw new RoomError("Xona toʻla");
         }
         await c.query(
-            `INSERT INTO room_players (room_code, player_id, name, color, is_host) VALUES ($1, $2, $3, $4, false)`,
-            [normalizeCode(code), player.id, player.name, player.color]
+            `INSERT INTO room_players (room_code, player_id, name, color, color_code, is_host) VALUES ($1, $2, $3, $4, $5, false)`,
+            [normalizeCode(code), player.id, player.name, player.color, player.colorCode]
         );
         return readRoom(c, normalizeCode(code));
     });

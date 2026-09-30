@@ -20658,6 +20658,8 @@
         var pending = {};
         var cache = {};
         var listeners = [];
+        var packetHandler = null;
+        var disconnectHandler = null;
         function notify() {
             for (var i = 0; i < listeners.length; i++) {
                 listeners[i]();
@@ -20674,6 +20676,7 @@
                 var ws;
                 try {
                     ws = new WebSocket(URL_WS);
+                    ws.binaryType = "arraybuffer";
                 } catch (e) {
                     opening = null;
                     reject(new Error("Serverga ulanib boʻlmadi"));
@@ -20702,9 +20705,18 @@
                     pending = {};
                     cache = {};
                     notify();
+                    if (disconnectHandler) {
+                        disconnectHandler();
+                    }
                 }
                 ;
                 ws.onmessage = function(e) {
+                    if (typeof e.data !== "string") {
+                        if (packetHandler) {
+                            packetHandler(new Uint8Array(e.data));
+                        }
+                        return;
+                    }
                     var msg;
                     try {
                         msg = JSON.parse(e.data);
@@ -20761,13 +20773,14 @@
             return res;
         }
         this.normalizeCode = function(code) {
-            return String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+            return String(code || "").replace(/[^0-9]/g, "").slice(0, 6);
         }
         ;
         this.create = function(opts) {
             return request("create", {
                 name: opts.name,
                 color: opts.color,
+                colorCode: opts.colorCode,
                 mapIndex: opts.mapIndex,
                 mapName: opts.mapName,
                 maxPlayers: opts.maxPlayers,
@@ -20789,7 +20802,8 @@
             return request("join", {
                 code: this.normalizeCode(code),
                 name: opts.name,
-                color: opts.color
+                color: opts.color,
+                colorCode: opts.colorCode
             }).then(remember);
         }
         ;
@@ -20802,6 +20816,20 @@
         ;
         this.start = function(code, playerId) {
             return request("start");
+        }
+        ;
+        this.onGamePacket = function(fn) {
+            packetHandler = fn;
+        }
+        ;
+        this.onDisconnect = function(fn) {
+            disconnectHandler = fn;
+        }
+        ;
+        this.sendGamePacket = function(bytes) {
+            if (socket && socket.readyState === 1) {
+                socket.send(bytes);
+            }
         }
         ;
         this.subscribe = function(fn) {
@@ -20820,6 +20848,7 @@
         var root = null;
         var session = null;
         var unsubscribe = null;
+        var game = null;
         var selectedMap = 0;
         var maxPlayers = 8;
         var botCount = 200;
@@ -20864,7 +20893,7 @@
                 ".tr-pl li{display:flex;align-items:center;gap:10px;padding:0.5em 0.7em;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.25)}",
                 ".tr-sw{width:1.1em;height:1.1em;border:1px solid #fff;flex:0 0 auto}",
                 ".tr-pl .tr-me{margin-left:auto;opacity:0.7;font-size:0.9em}",
-                ".tr-input{width:100%;padding:0.5em;border:2px solid #fff;background:rgba(0,0,0,0.6);color:#fff;text-align:center;text-transform:uppercase;font:900 clamp(1.6em,7vw,2.6em) 'Arial Black',system-ui;letter-spacing:0.25em;-webkit-user-select:text;user-select:text}",
+                ".tr-input{width:100%;padding:0.5em;border:2px solid #fff;background:rgba(0,0,0,0.6);color:#fff;text-align:center;font:900 clamp(1.6em,7vw,2.6em) 'Arial Black',system-ui;letter-spacing:0.25em;-webkit-user-select:text;user-select:text}",
                 ".tr-err{color:#ff8080;min-height:1.3em;margin:8px 0 0;text-align:center}",
                 ".tr-wait{text-align:center;opacity:0.85}"
             ].join("");
@@ -20872,13 +20901,15 @@
         }
         function me() {
             var name = String(bm.buffer.data[122].value || "").trim() || "Oʻyinchi";
+            var colorCode = bm.z.xt();
             var color = "rgb(120,120,255)";
             try {
-                color = bD.color.a5C(bm.buffer.data[121].value);
+                color = bD.color.a5C(colorCode);
             } catch (e) {}
             return {
                 name: name.slice(0, 20),
-                color: color
+                color: color,
+                colorCode: colorCode
             };
         }
         function maps() {
@@ -20993,6 +21024,7 @@
                 service.create({
                     name: who.name,
                     color: who.color,
+                    colorCode: who.colorCode,
                     mapIndex: selectedMap,
                     mapName: names[selectedMap],
                     maxPlayers: maxPlayers,
@@ -21018,7 +21050,9 @@
             box.appendChild(el("h3", "", "🔎 Xona kodini kiriting"));
             var input = el("input", "tr-input");
             input.maxLength = 6;
-            input.placeholder = "ABC123";
+            input.placeholder = "123456";
+            input.inputMode = "numeric";
+            input.pattern = "[0-9]*";
             input.autocomplete = "off";
             input.spellcheck = false;
             input.setAttribute("aria-label", "Xona kodi");
@@ -21036,7 +21070,8 @@
                 var who = me();
                 service.join(found.code, {
                     name: who.name,
-                    color: who.color
+                    color: who.color,
+                    colorCode: who.colorCode
                 }).then(function(res) {
                     session = {
                         code: res.room.code,
@@ -21172,10 +21207,11 @@
                     return;
                 }
                 if (r.status === "started") {
+                    var myId = session.playerId;
                     stopWatching();
                     session = null;
                     close();
-                    startGame(r);
+                    startGame(r, myId);
                     return;
                 }
                 infoHolder.textContent = "";
@@ -21197,25 +21233,96 @@
             render();
             unsubscribe = service.subscribe(render);
         }
-        function startGame(room) {
-            // MOCK: hozircha har bir mijoz xonadagi sozlamalar bilan lokal oʻyin boshlaydi.
-            // Backend ulanganda harakatlar server orqali sinxronlanadi.
+        // Bir nechta odam bo'lsa, o'yin dvigatelning tarmoq rejimida (lockstep) boshlanadi:
+        // harakatlar serverga ketadi va har 7 tikda serverdan kelgan "turn" orqali hammada bir xil qo'llanadi.
+        function startGame(room, myId) {
+            var humans = room.players.length;
+            var myIndex = -1;
+            for (var aC = 0; aC < humans; aC++) {
+                if (room.players[aC].id === myId) {
+                    myIndex = aC;
+                }
+            }
             aE.a6i.a7B();
             var sC = aE.data;
             sC.mapType = 1;
             sC.mapRealisticIndex = room.mapIndex;
             sC.mapSeed = room.seed;
             sC.spawningSeed = room.seed;
-            sC.playerCount = Math.max(2, Math.min(512, room.botCount + 1));
+            sC.playerCount = Math.max(2, Math.min(512, room.botCount + humans));
             sC.isReplay = 0;
             bC.re.dk();
-            aE.a6i.a7A();
+            if (humans > 1 && myIndex >= 0) {
+                sC.humanCount = humans;
+                sC.selectedPlayer = myIndex;
+                sC.gameMode = 0;
+                sC.battleRoyaleMode = 0;
+                sC.selectableSpawn = 1;
+                sC.colorsData = new Uint32Array(humans);
+                sC.playerNamesData = new Array(humans);
+                sC.a75 = new Uint32Array(humans);
+                for (aC = 0; aC < humans; aC++) {
+                    sC.colorsData[aC] = room.players[aC].colorCode;
+                    sC.playerNamesData[aC] = room.players[aC].name;
+                    sC.a75[aC] = aC + 1;
+                }
+                game = {
+                    queue: []
+                };
+            } else {
+                aE.a6i.a7A();
+            }
             ab.aIa();
             aE.a6i.a77();
             sC.canvas = null;
             aE.a6m();
             aE.a6k = 0;
+            if (game) {
+                var queued = game.queue;
+                game.queue = null;
+                queued.forEach(deliver);
+            }
         }
+        function deliver(bytes) {
+            if (!game) {
+                return;
+            }
+            if (game.queue) {
+                game.queue.push(bytes);
+                return;
+            }
+            if (aE.lE || ab.a3P() !== 8) {
+                return;
+            }
+            b1.a8n.aW4(b1.z.a3X, bytes);
+        }
+        service.onGamePacket(deliver);
+        service.onDisconnect(function() {
+            if (!game) {
+                return;
+            }
+            game = null;
+            aE.a3d(true);
+            open("⚠️ Aloqa uzildi", [el("p", "tr-wait", "Server bilan aloqa uzildi, oʻyin toʻxtatildi.")], [button("⬅️ Orqaga", function() {
+                close();
+            })]);
+        });
+        // Dvigatel harakat paketlarini b1.z.send orqali yuboradi; faqat oʻyin harakatlari (birinchi bit = 1) serverga ketadi.
+        this.gameSend = function(aD) {
+            if (!game || !aD || !aD.length || !(aD[0] & 128)) {
+                return;
+            }
+            service.sendGamePacket(aD.slice(0));
+        }
+        ;
+        this.gameEnded = function() {
+            if (!game) {
+                return;
+            }
+            game = null;
+            service.leave();
+        }
+        ;
     }
     function dJ() {
         this.z = new aPn();
@@ -26744,7 +26851,11 @@
             return false;
         }
         ;
-        this.send = function(oN, aD) {}
+        this.send = function(oN, aD) {
+            if (aRoomUI) {
+                aRoomUI.gameSend(aD);
+            }
+        }
         ;
         this.a43 = function(oN) {}
         ;
@@ -26758,7 +26869,11 @@
         ;
         this.aW0 = function(oN, aVy) {}
         ;
-        this.a6z = function() {}
+        this.a6z = function() {
+            if (aRoomUI) {
+                aRoomUI.gameEnded();
+            }
+        }
         ;
         this.aW1 = function(oN, e) {}
         ;
@@ -32819,9 +32934,7 @@
         ;
         function mj() {
             aIF = bi.eZ + 3000;
-            if (aE.hi || aE.lE) {
-                return;
-            }
+            return;
             if (bD.gv.hl(aE.fJ)) {
                 return;
             }
