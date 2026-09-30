@@ -10,7 +10,8 @@ Territorial.io o'yinining o'zbekcha, offline single-player versiyasi va xonalar 
 | `components/GameLoader.tsx` | O'yin skriptini gidratatsiyadan keyin bir marta yuklaydi |
 | `public/game/game.js` | O'yin dvigateli (obfuskatsiya qilingan, tarmoqsiz, o'zbekcha) |
 | `server.mjs` | Custom server: Next.js + xonalar WebSocket'i (`/ws`) bitta portda |
-| `server/rooms.mjs` | Xona amallari: create / find / join / leave / start |
+| `server/rooms.mjs` | Xona amallari: create / find / join / leave / start / chat |
+| `server/chat.mjs` | Matnli chat: xabarlar tarixi (xotirada, oxirgi 50 ta), so'z filtri, spamga qarshi cheklov |
 | `server/db.mjs` | Neon PostgreSQL: `rooms`, `room_players` jadvallari |
 | `app/manifest.ts`, `public/icons/` | PWA: telefon ekraniga o'rnatish (to'liq ekran) |
 | `public/sw.js`, `components/PwaSupport.tsx` | Service worker (oflayn yakka o'yin) va o'yin paytida ekran o'chmasligi (Wake Lock) |

@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { WebSocketServer } from "ws";
 import { migrate, cleanup, getRoom, createRoom, joinRoom, leaveRoom, startRoom, normalizeCode, RoomError } from "./db.mjs";
 import { GameSession } from "./game.mjs";
+import { ChatRooms, ChatError } from "./chat.mjs";
 
 const WS_PATH = "/ws";
 // Vergul bilan ajratilgan ruxsat etilgan saytlar, masalan: https://game-fully.vercel.app
@@ -24,6 +25,7 @@ export async function attachRooms(httpServer) {
     // Qayta ulanish tokenlari: token → { playerId, createdAt }. Token faqat o'yinchining o'ziga beriladi.
     const tokens = new Map();
     const pendingLeaves = new Map();
+    const chat = new ChatRooms();
 
     function issueToken(ws) {
         if (!ws.session.token) {
@@ -86,7 +88,32 @@ export async function attachRooms(httpServer) {
         }
         if (!room) {
             watchers.delete(code);
+            chat.drop(code);
         }
+    }
+
+    // Chat xabari xonani kuzatayotganlarga (lobbi) va o'yin qatnashchilariga boradi.
+    function broadcastChat(code, message) {
+        const targets = new Set(watchers.get(code));
+        for (const m of games.get(code)?.members || []) {
+            if (m.connected) {
+                targets.add(m.ws);
+            }
+        }
+        const data = JSON.stringify({ type: "chat", code, message });
+        for (const client of targets) {
+            if (client.readyState === client.OPEN) {
+                client.send(data);
+            }
+        }
+    }
+
+    function chatCode(ws) {
+        return ws.game?.code || ws.session.code;
+    }
+
+    function setAuthor(ws, player) {
+        ws.session.author = { id: ws.session.playerId, name: player.name, color: player.color };
     }
 
     function cleanPlayer(msg) {
@@ -141,13 +168,15 @@ export async function attachRooms(httpServer) {
             if (!MAX_PLAYER_OPTIONS.includes(maxPlayers)) {
                 throw new RoomError("Notoʻgʻri maʼlumot");
             }
-            const room = await createRoom({ id: ws.session.playerId, ...cleanPlayer(msg) }, {
+            const player = cleanPlayer(msg);
+            const room = await createRoom({ id: ws.session.playerId, ...player }, {
                 mapIndex: int(msg.mapIndex, 0, 63),
                 mapName: String(msg.mapName || "").slice(0, 40),
                 maxPlayers,
                 botCount: int(msg.botCount, 0, 511)
             });
             watch(ws, room.code);
+            setAuthor(ws, player);
             return { room, playerId: ws.session.playerId, token: issueToken(ws) };
         },
         async find(ws, msg) {
@@ -159,8 +188,10 @@ export async function attachRooms(httpServer) {
         },
         async join(ws, msg) {
             await leaveCurrent(ws);
-            const room = await joinRoom(msg.code, { id: ws.session.playerId, ...cleanPlayer(msg) });
+            const player = cleanPlayer(msg);
+            const room = await joinRoom(msg.code, { id: ws.session.playerId, ...player });
             watch(ws, room.code);
+            setAuthor(ws, player);
             publish(room.code, room);
             return { room, playerId: ws.session.playerId, token: issueToken(ws) };
         },
@@ -188,7 +219,12 @@ export async function attachRooms(httpServer) {
             if (inGame) {
                 ws.afterReply = game.reattach(playerId, ws);
             }
-            return { room: inGame ? game.room : room, playerId, inGame };
+            const current = inGame ? game.room : room;
+            const me = current.players.find((p) => p.id === playerId);
+            if (me) {
+                setAuthor(ws, me);
+            }
+            return { room: current, playerId, inGame };
         },
         async leave(ws) {
             await leaveCurrent(ws);
@@ -206,6 +242,24 @@ export async function attachRooms(httpServer) {
             }
             publish(code, room);
             return room;
+        },
+        async chat(ws, msg) {
+            const code = chatCode(ws);
+            if (!code || !ws.session.author) {
+                throw new RoomError("Siz xonada emassiz");
+            }
+            let message;
+            try {
+                message = chat.post(ws, code, ws.session.author, msg.text);
+            } catch (e) {
+                throw e instanceof ChatError ? new RoomError(e.message) : e;
+            }
+            broadcastChat(code, message);
+            return null;
+        },
+        async chatHistory(ws) {
+            const code = chatCode(ws);
+            return code ? { code, messages: chat.history(code) } : { code: null, messages: [] };
         }
     };
 
@@ -220,7 +274,12 @@ export async function attachRooms(httpServer) {
                 }
             }
         });
-        const session = new GameSession(room, members, (s) => games.get(s.code) === s && games.delete(s.code));
+        const session = new GameSession(room, members, (s) => {
+            if (games.get(s.code) === s) {
+                games.delete(s.code);
+                chat.drop(s.code);
+            }
+        });
         games.set(room.code, session);
     }
 
@@ -286,6 +345,7 @@ export async function attachRooms(httpServer) {
                 tokens.delete(token);
             }
         }
+        chat.prune();
         cleanup().catch((e) => console.error("[rooms:cleanup]", e));
     }, 10 * 60 * 1000);
 

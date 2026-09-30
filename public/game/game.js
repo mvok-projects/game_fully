@@ -20930,6 +20930,7 @@
         var listeners = [];
         var packetHandler = null;
         var disconnectHandler = null;
+        var chatHandler = null;
         function notify() {
             for (var i = 0; i < listeners.length; i++) {
                 listeners[i]();
@@ -21005,6 +21006,10 @@
                     } else if (msg.type === "room_closed") {
                         delete cache[msg.code];
                         notify();
+                    } else if (msg.type === "chat") {
+                        if (chatHandler) {
+                            chatHandler(msg.code, msg.message);
+                        }
                     }
                 }
                 ;
@@ -21106,6 +21111,20 @@
             disconnectHandler = fn;
         }
         ;
+        this.sendChat = function(text) {
+            return request("chat", {
+                text: text
+            });
+        }
+        ;
+        this.chatHistory = function() {
+            return request("chatHistory");
+        }
+        ;
+        this.onChat = function(fn) {
+            chatHandler = fn;
+        }
+        ;
         this.sendGamePacket = function(bytes) {
             if (socket && socket.readyState === 1) {
                 socket.send(bytes);
@@ -21191,7 +21210,28 @@
                 ".tr-pl .tr-me{margin-left:auto;opacity:0.7;font-size:0.9em}",
                 ".tr-input{width:100%;padding:0.5em;border:2px solid #fff;background:rgba(0,0,0,0.6);color:#fff;text-align:center;font:900 clamp(1.6em,7vw,2.6em) 'Arial Black',system-ui;letter-spacing:0.25em;-webkit-user-select:text;user-select:text}",
                 ".tr-err{color:#ff8080;min-height:1.3em;margin:8px 0 0;text-align:center}",
-                ".tr-wait{text-align:center;opacity:0.85}"
+                ".tr-wait{text-align:center;opacity:0.85}",
+                ".tr-chat-view{display:flex;flex-direction:column;gap:6px;min-height:0}",
+                ".tr-chat-log{height:11em;overflow-y:auto;overscroll-behavior:contain;padding:6px 8px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.25);font-size:0.95em;line-height:1.35;-webkit-user-select:text;user-select:text}",
+                ".tr-chat-line{overflow-wrap:anywhere;padding:1px 0}",
+                ".tr-chat-dot{display:inline-block;width:0.7em;height:0.7em;margin-right:0.35em;border:1px solid #fff;border-radius:50%;vertical-align:baseline}",
+                ".tr-chat-empty{opacity:0.6;font-style:italic}",
+                ".tr-chat-form{display:flex;gap:6px}",
+                ".tr-chat-input{flex:1;min-width:0;padding:0.55em 0.7em;border:2px solid rgba(255,255,255,0.6);background:rgba(0,0,0,0.6);color:#fff;font:16px system-ui;-webkit-user-select:text;user-select:text}",
+                ".tr-chat-input:focus{outline:none;border-color:#fff}",
+                ".tr-chat-send{flex:0 0 auto;min-width:2.8em;border:2px solid #fff;background:rgba(10,140,10,0.75);color:#fff;font:1.1em system-ui;cursor:pointer}",
+                ".tr-chat-send:disabled{opacity:0.5;cursor:default}",
+                ".tr-chat-err{color:#ff8080;font-size:0.85em;min-height:1.1em}",
+                ".tr-chat{position:fixed;left:8px;top:50%;transform:translateY(-50%);z-index:900;font-family:system-ui,sans-serif;color:#fff;display:flex;align-items:center;gap:8px;pointer-events:none}",
+                ".tr-chat>*{pointer-events:auto}",
+                ".tr-chat-toggle{position:relative;width:48px;height:48px;border-radius:50%;border:2px solid #fff;background:rgba(0,20,30,0.85);color:#fff;font-size:22px;cursor:pointer;flex:0 0 auto}",
+                ".tr-chat-badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#e53935;color:#fff;font:700 12px/20px system-ui}",
+                ".tr-chat-preview{max-width:min(300px,calc(100vw - 80px));padding:6px 10px;background:rgba(0,0,0,0.72);border:1px solid rgba(255,255,255,0.35);border-radius:8px;font-size:0.95em;cursor:pointer}",
+                ".tr-chat-panel{width:min(340px,calc(100vw - 80px));padding:8px;background:rgba(0,10,20,0.88);border:2px solid #fff;border-radius:10px}",
+                ".tr-chat-panel .tr-chat-log{height:min(13em,30vh)}",
+                ".tr-chat-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;margin-bottom:6px}",
+                ".tr-chat-close{border:0;background:none;color:#fff;font-size:1.1em;cursor:pointer;padding:2px 6px}",
+                ".tr-chat [hidden]{display:none!important}"
             ].join("");
             document.head.appendChild(st);
         }
@@ -21283,6 +21323,248 @@
                 row.appendChild(b);
             });
             return row;
+        }
+        // ---- Matnli chat (xona va o'yin ichida) ----
+        // Xabarlar server orqali shu xonadagi hammaga boradi. Lobbida chat xona oynasining ichida,
+        // o'yinda esa chap chetdagi 💬 tugmasi orqali ochiladigan panelda ko'rinadi.
+        var chat = {
+            code: null,
+            myId: null,
+            messages: [],
+            views: [],
+            widget: null
+        };
+        function chatEnter(code, myId) {
+            if (chat.code !== code) {
+                chat.messages = [];
+            }
+            chat.code = code;
+            chat.myId = myId;
+            service.chatHistory().then(function(res) {
+                if (res.code !== chat.code) {
+                    return;
+                }
+                var known = {};
+                chat.messages.forEach(function(m) {
+                    known[m.id] = true;
+                });
+                chat.messages = res.messages.filter(function(m) {
+                    return !known[m.id];
+                }).concat(chat.messages).sort(function(a, b) {
+                    return a.id - b.id;
+                }).slice(-CHAT_HISTORY);
+                chatRenderAll();
+            }, function() {});
+        }
+        function chatExit() {
+            chat.code = null;
+            chat.myId = null;
+            chat.messages = [];
+            chat.views = [];
+            chatHideWidget();
+        }
+        var CHAT_HISTORY = 50;
+        service.onChat(function(code, message) {
+            if (code !== chat.code) {
+                return;
+            }
+            chat.messages.push(message);
+            if (chat.messages.length > CHAT_HISTORY) {
+                chat.messages.shift();
+            }
+            chatRenderAll();
+            if (chat.widget && !chat.widget.open && message.playerId !== chat.myId) {
+                chat.widget.unread++;
+                chatUpdateBadge();
+                chatPreview(message);
+            }
+        });
+        function chatLine(m) {
+            var line = el("div", "tr-chat-line");
+            var mine = m.playerId === chat.myId;
+            var dot = el("span", "tr-chat-dot");
+            dot.style.background = m.color;
+            line.appendChild(dot);
+            line.appendChild(el("b", "", (mine ? "Siz" : m.name) + ": "));
+            line.appendChild(el("span", "", m.text));
+            line.title = new Date(m.at).toLocaleTimeString();
+            return line;
+        }
+        function chatRender(view) {
+            var atBottom = view.log.scrollHeight - view.log.scrollTop - view.log.clientHeight < 40;
+            view.log.textContent = "";
+            if (!chat.messages.length) {
+                view.log.appendChild(el("div", "tr-chat-empty", "Hali xabar yoʻq. Birinchi boʻlib yozing!"));
+            }
+            chat.messages.forEach(function(m) {
+                view.log.appendChild(chatLine(m));
+            });
+            if (atBottom || view.stick) {
+                view.stick = false;
+                view.log.scrollTop = view.log.scrollHeight;
+            }
+        }
+        function chatRenderAll() {
+            chat.views = chat.views.filter(function(v) {
+                return document.body.contains(v.log);
+            });
+            chat.views.forEach(chatRender);
+        }
+        // Xabarlar ro'yxati + yozish maydoni. Dvigatel klaviatura tugmalarini (WASD, raqamlar) ushlamasligi uchun
+        // tugma hodisalari shu yerda to'xtatiladi.
+        function chatView() {
+            var box = el("div", "tr-chat-view");
+            var log = el("div", "tr-chat-log");
+            log.setAttribute("role", "log");
+            log.setAttribute("aria-live", "polite");
+            var form = el("form", "tr-chat-form");
+            var input = el("input", "tr-chat-input");
+            input.type = "text";
+            input.maxLength = 200;
+            input.placeholder = "Xabar yozing...";
+            input.autocomplete = "off";
+            input.enterKeyHint = "send";
+            input.setAttribute("aria-label", "Chat xabari");
+            var send = el("button", "tr-chat-send", "➤");
+            send.type = "submit";
+            send.setAttribute("aria-label", "Yuborish");
+            var err = el("div", "tr-chat-err");
+            var errTimer = null;
+            form.appendChild(input);
+            form.appendChild(send);
+            box.appendChild(log);
+            box.appendChild(form);
+            box.appendChild(err);
+            ["keydown", "keyup", "keypress", "wheel", "contextmenu"].forEach(function(t) {
+                box.addEventListener(t, function(e) {
+                    e.stopPropagation();
+                });
+            });
+            form.addEventListener("submit", function(e) {
+                e.preventDefault();
+                var text = input.value.trim();
+                if (!text || send.disabled) {
+                    return;
+                }
+                send.disabled = true;
+                service.sendChat(text).then(function() {
+                    input.value = "";
+                    view.stick = true;
+                }, function(ex) {
+                    err.textContent = ex.message;
+                    clearTimeout(errTimer);
+                    errTimer = setTimeout(function() {
+                        err.textContent = "";
+                    }, 3000);
+                }).then(function() {
+                    send.disabled = false;
+                });
+            });
+            var view = {
+                el: box,
+                log: log,
+                input: input,
+                stick: true
+            };
+            chat.views.push(view);
+            chatRender(view);
+            return view;
+        }
+        function chatShowWidget() {
+            if (chat.widget) {
+                return;
+            }
+            var root = el("aside", "tr-chat");
+            var toggle = el("button", "tr-chat-toggle", "💬");
+            toggle.type = "button";
+            toggle.setAttribute("aria-label", "Chat");
+            toggle.setAttribute("aria-expanded", "false");
+            var badge = el("span", "tr-chat-badge");
+            badge.hidden = true;
+            toggle.appendChild(badge);
+            var preview = el("div", "tr-chat-preview");
+            preview.hidden = true;
+            var panel = el("div", "tr-chat-panel");
+            panel.hidden = true;
+            var head = el("div", "tr-chat-head");
+            head.appendChild(el("span", "", "💬 Chat"));
+            var closeBtn = el("button", "tr-chat-close", "✕");
+            closeBtn.type = "button";
+            closeBtn.setAttribute("aria-label", "Chatni yopish");
+            head.appendChild(closeBtn);
+            panel.appendChild(head);
+            var view = chatView();
+            panel.appendChild(view.el);
+            root.appendChild(toggle);
+            root.appendChild(preview);
+            root.appendChild(panel);
+            chat.widget = {
+                root: root,
+                panel: panel,
+                toggle: toggle,
+                badge: badge,
+                preview: preview,
+                previewTimer: null,
+                view: view,
+                open: false,
+                unread: 0
+            };
+            function setOpen(open) {
+                var w = chat.widget;
+                w.open = open;
+                panel.hidden = !open;
+                toggle.setAttribute("aria-expanded", String(open));
+                if (open) {
+                    w.unread = 0;
+                    chatUpdateBadge();
+                    preview.hidden = true;
+                    view.stick = true;
+                    chatRender(view);
+                    view.input.focus();
+                } else {
+                    view.input.blur();
+                }
+            }
+            toggle.addEventListener("click", function() {
+                setOpen(!chat.widget.open);
+            });
+            closeBtn.addEventListener("click", function() {
+                setOpen(false);
+            });
+            preview.addEventListener("click", function() {
+                setOpen(true);
+            });
+            root.addEventListener("keydown", function(e) {
+                if (e.key === "Escape") {
+                    setOpen(false);
+                }
+            });
+            document.body.appendChild(root);
+        }
+        function chatHideWidget() {
+            if (!chat.widget) {
+                return;
+            }
+            clearTimeout(chat.widget.previewTimer);
+            if (chat.widget.root.parentNode) {
+                chat.widget.root.parentNode.removeChild(chat.widget.root);
+            }
+            chat.widget = null;
+        }
+        function chatUpdateBadge() {
+            var w = chat.widget;
+            w.badge.hidden = !w.unread;
+            w.badge.textContent = w.unread > 9 ? "9+" : String(w.unread);
+        }
+        function chatPreview(m) {
+            var w = chat.widget;
+            w.preview.textContent = "";
+            w.preview.appendChild(chatLine(m));
+            w.preview.hidden = false;
+            clearTimeout(w.previewTimer);
+            w.previewTimer = setTimeout(function() {
+                w.preview.hidden = true;
+            }, 5000);
         }
         this.openCreate = function() {
             var names = maps();
@@ -21467,6 +21749,10 @@
             plBox.appendChild(plTitle);
             var list = el("ul", "tr-pl");
             plBox.appendChild(list);
+            var chatBox = el("div", "tr-box");
+            chatBox.appendChild(el("h3", "", "💬 Chat"));
+            chatEnter(room.code, session.playerId);
+            chatBox.appendChild(chatView().el);
             var wait = el("p", "tr-wait", isHost ? "" : "⏳ Xona yaratuvchisi oʻyinni boshlashini kuting...");
             var err = el("p", "tr-err");
             var startBtn = button("▶️ Start", function() {
@@ -21482,17 +21768,19 @@
                 stopWatching();
                 session = null;
                 clearRoom();
+                chatExit();
                 close();
                 service.leave(s.code, s.playerId);
             });
             var footer = isHost ? [leaveBtn, startBtn] : [leaveBtn];
-            open("🏠 Xona " + room.code, [codeBox, infoBox, plBox, wait, err], footer);
+            open("🏠 Xona " + room.code, [codeBox, infoBox, plBox, chatBox, wait, err], footer);
             function render() {
                 var r = service.get(session.code);
                 if (!r) {
                     stopWatching();
                     session = null;
                     clearRoom();
+                    chatExit();
                     open("🏠 Xona yopildi", [el("p", "tr-wait", "Xona yaratuvchisi xonani yopdi.")], [button("⬅️ Orqaga", function() {
                         close();
                     })]);
@@ -21504,6 +21792,7 @@
                     stopWatching();
                     session = null;
                     clearRoom();
+                    chatExit();
                     close();
                     return;
                 }
@@ -21570,6 +21859,8 @@
                 game = {
                     queue: []
                 };
+                chatEnter(room.code, myId);
+                chatShowWidget();
             } else {
                 aE.a6i.a7A();
                 clearRoom();
@@ -21604,6 +21895,7 @@
                 return;
             }
             game = null;
+            chatExit();
             aE.a3d(true);
             open("⚠️ Aloqa uzildi", [el("p", "tr-wait", "Server bilan aloqa uzildi, oʻyin toʻxtatildi.")], [button("⬅️ Orqaga", function() {
                 close();
@@ -21623,6 +21915,7 @@
             }
             game = null;
             clearRoom();
+            chatExit();
             service.leave();
         }
         ;
