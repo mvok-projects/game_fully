@@ -20649,8 +20649,9 @@
         ;
     }
     function RoomService() {
-        // Xonalar serveri (server/rooms.mjs): shu sayt manzilidagi /ws orqali ulanadi, xonalar Neon PostgreSQL'da saqlanadi.
-        var URL_WS = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+        // Xonalar serveri (server/rooms.mjs): NEXT_PUBLIC_ROOMS_WS_URL berilgan bo'lsa o'sha manzilga,
+        // aks holda shu sayt manzilidagi /ws ga ulanadi. Xonalar Neon PostgreSQL'da saqlanadi.
+        var URL_WS = window.__TT_ROOMS_URL || ((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws");
         var TIMEOUT = 10000;
         var socket = null;
         var opening = null;

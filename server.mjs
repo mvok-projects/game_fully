@@ -17,7 +17,7 @@ httpServer.on("request", (req, res) => {
 });
 
 httpServer.listen(port, () => {
-    console.log(`> Territorial: http://localhost:${port} (${dev ? "development" : "production"})`);
+    console.log(`> Territorial: ${port}-portda ishlayapti (${dev ? "development" : "production"})`);
 });
 
 function shutdown() {

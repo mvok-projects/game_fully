@@ -4,6 +4,9 @@ import { migrate, cleanup, getRoom, createRoom, joinRoom, leaveRoom, startRoom, 
 import { GameSession } from "./game.mjs";
 
 const WS_PATH = "/ws";
+// Vergul bilan ajratilgan ruxsat etilgan saytlar, masalan: https://game-fully.vercel.app
+// Bo'sh bo'lsa, istalgan sayt ulanishi mumkin.
+const ALLOWED_ORIGINS = String(process.env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
 const MAX_PLAYER_OPTIONS = [2, 4, 8, 16];
 
 // Xonalar WebSocket serverini mavjud HTTP serverga ulaydi.
@@ -19,6 +22,10 @@ export async function attachRooms(httpServer) {
     httpServer.on("upgrade", (req, socket, head) => {
         const { pathname } = new URL(req.url, "http://localhost");
         if (pathname !== WS_PATH) {
+            return;
+        }
+        if (ALLOWED_ORIGINS.length && !ALLOWED_ORIGINS.includes(req.headers.origin)) {
+            socket.end("HTTP/1.1 403 Forbidden\r\n\r\n");
             return;
         }
         wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws, req));

@@ -3,8 +3,13 @@ import pg from "pg";
 const ALPHABET = "0123456789";
 const ROOM_TTL_HOURS = 2;
 
+// Neon satrlaridagi sslmode=require ni hozirgi xatti-harakatga teng verify-full ga almashtiramiz (pg ogohlantirishisiz).
+function connectionString() {
+    return String(process.env.DATABASE_URL || "").replace(/([?&]sslmode=)(require|prefer|verify-ca)\b/, "$1verify-full");
+}
+
 export const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: connectionString(),
     max: 5
 });
 
