@@ -5,6 +5,17 @@ body {
   margin: 0;
   background: black;
   color: white;
+  /* Telefonda "tortib yangilash" va chetdagi sakrash o'yinni buzmasin */
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* O'yin maydoni: ikki marta bosib kattalashtirish, uzoq bosishdagi menyu va matn belgilash o'chiriladi */
+#canvasA {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 * {

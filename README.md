@@ -12,6 +12,8 @@ Territorial.io o'yinining o'zbekcha, offline single-player versiyasi va xonalar 
 | `server.mjs` | Custom server: Next.js + xonalar WebSocket'i (`/ws`) bitta portda |
 | `server/rooms.mjs` | Xona amallari: create / find / join / leave / start |
 | `server/db.mjs` | Neon PostgreSQL: `rooms`, `room_players` jadvallari |
+| `app/manifest.ts`, `public/icons/` | PWA: telefon ekraniga o'rnatish (to'liq ekran) |
+| `public/sw.js`, `components/PwaSupport.tsx` | Service worker (oflayn yakka o'yin) va o'yin paytida ekran o'chmasligi (Wake Lock) |
 
 ## Ishga tushirish
 
@@ -44,3 +46,4 @@ Vercel serverless bo'lgani uchun doimiy WebSocket'ni ushlab turmaydi, shuning uc
 
 - O'yin dvigateli `body` ning to'g'ridan-to'g'ri bolalarini o'zi boshqaradi, shuning uchun `page.tsx` da canvas hech qanday o'rovchi elementga olinmaydi.
 - `.env` git'ga qo'shilmaydi.
+- Service worker faqat production'da (`npm start`) ro'yxatdan o'tadi, dev'da o'chiq. Sahifa va `game.js` internet bo'lsa har doim serverdan olinadi, kesh faqat oflayn uchun.
