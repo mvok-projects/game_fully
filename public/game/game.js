@@ -4855,13 +4855,23 @@
     function wY(uC, wZ) {
         this.sA = [];
         var wa = this.sA;
+        // Belgi (⚪/🟢) alohida span'da: dizaynli oynalarda u yashirilib, o'rniga chizilgan radio ko'rsatiladi.
+        function mark(wb, on) {
+            wb.setAttribute("aria-checked", String(on));
+            wb.firstChild.textContent = on ? "🟢" : "⚪";
+        }
         function dk() {
             var wb;
             var fZ = uC.oM.length;
             for (var aC = 0; aC < fZ; aC++) {
                 wb = document.createElement("p");
                 wb.className = "tt-opt";
-                wb.textContent = "⚪ " + uC.oM[aC];
+                wb.setAttribute("role", "radio");
+                var e = document.createElement(S[17]);
+                e.className = "tt-opt-e";
+                wb.appendChild(e);
+                wb.appendChild(document.createTextNode(" " + uC.oM[aC]));
+                mark(wb, false);
                 wb.style.margin = "0";
                 wb.name = "" + aC;
                 wb.style.cursor = S[39];
@@ -4869,13 +4879,19 @@
                 wb.addEventListener(S[24], click);
                 wa.push(wb);
             }
-            wa[uC.value].textContent = wa[uC.value].textContent.replace("⚪", "🟢");
+            mark(wa[uC.value], true);
         }
+        this.select = function(eI) {
+            for (var aC = 0; aC < wa.length; aC++) {
+                mark(wa[aC], aC === eI);
+            }
+        }
+        ;
         function click() {
             for (var aC = 0; aC < wa.length; aC++) {
-                wa[aC].textContent = wa[aC].textContent.replace("🟢", "⚪");
+                mark(wa[aC], false);
             }
-            this.textContent = this.textContent.replace("⚪", "🟢");
+            mark(this, true);
             var eI = parseInt(this.name);
             if (uC.eI !== undefined) {
                 bm.qo.qp(uC.eI, eI);
@@ -4895,8 +4911,10 @@
         this.wi = uL;
         this.wj = wd;
         // Bosh menyu dizayni (Main Menu v2) uslubini shu oynaga yoqadi.
+        var skinned = false;
         this.skin = function() {
             ttSkinStyle();
+            skinned = true;
             ui.classList.add("tt-skin");
         }
         ;
@@ -4955,6 +4973,9 @@
             return wm;
         }
         this.show = function() {
+            if (skinned) {
+                ttIconize(ui);
+            }
             if (we !== false) {
                 document.body.appendChild(ui);
             } else {
@@ -21352,7 +21373,12 @@
                 ".tr-chat-panel .tr-chat-log{height:min(13em,30vh)}",
                 ".tr-chat-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;margin-bottom:6px}",
                 ".tr-chat-close{border:0;background:none;color:#fff;font-size:1.1em;cursor:pointer;padding:2px 6px}",
-                ".tr-chat [hidden]{display:none!important}"
+                ".tr-chat [hidden]{display:none!important}",
+                ".tr-chat-toggle .tt-ic,.tr-chat-send .tt-ic{margin:0}",
+                ".tr-chat-toggle{display:flex;align-items:center;justify-content:center}",
+                ".tr-nm .tt-ic{color:#f2c14e}",
+                ".tr-box h3 .tt-ic{width:15px;height:15px;vertical-align:-3px;margin-right:8px;color:#b9c8d0}",
+                ".tr-hd .tt-ic{filter:drop-shadow(3px 3px 0 #000)}"
             ].join("");
             document.head.appendChild(st);
         }
@@ -21392,12 +21418,27 @@
             b.addEventListener("click", onClick);
             return b;
         }
+        // Ikonka + matn (matn har doim textContent sifatida, HTML emas).
+        function setIconText(e, icon, text) {
+            e.innerHTML = ttIcon(icon);
+            e.appendChild(document.createTextNode(text));
+        }
+        function iconEl(tag, cls, icon, text) {
+            var e = el(tag, cls);
+            setIconText(e, icon, text);
+            return e;
+        }
+        function iconButton(icon, text, onClick, cls) {
+            var b = button("", onClick, cls);
+            setIconText(b, icon, text);
+            return b;
+        }
         function open(title, body, footer) {
             injectStyle();
             close();
             root = el("div", "tr-ov");
             root.setAttribute("role", "dialog");
-            root.setAttribute("aria-label", title);
+            root.setAttribute("aria-label", typeof title === "string" ? title : title[1]);
             ["keydown", "keyup", "keypress", "wheel", "contextmenu"].forEach(function(t) {
                 root.addEventListener(t, function(e) {
                     e.stopPropagation();
@@ -21406,7 +21447,7 @@
                     }
                 });
             });
-            root.appendChild(el("div", "tr-hd", title));
+            root.appendChild(typeof title === "string" ? el("div", "tr-hd", title) : iconEl("div", "tr-hd", title[0], title[1]));
             var bd = el("div", "tr-bd");
             body.forEach(function(b) {
                 bd.appendChild(b);
@@ -21546,7 +21587,8 @@
             input.autocomplete = "off";
             input.enterKeyHint = "send";
             input.setAttribute("aria-label", "Chat xabari");
-            var send = el("button", "tr-chat-send", "➤");
+            var send = el("button", "tr-chat-send");
+            send.innerHTML = ttIcon("send");
             send.type = "submit";
             send.setAttribute("aria-label", "Yuborish");
             var err = el("div", "tr-chat-err");
@@ -21596,7 +21638,8 @@
                 return;
             }
             var root = el("aside", "tr-chat");
-            var toggle = el("button", "tr-chat-toggle", "💬");
+            var toggle = el("button", "tr-chat-toggle");
+            toggle.innerHTML = ttIcon("chat");
             toggle.type = "button";
             toggle.setAttribute("aria-label", "Chat");
             toggle.setAttribute("aria-expanded", "false");
@@ -21608,7 +21651,7 @@
             var panel = el("div", "tr-chat-panel");
             panel.hidden = true;
             var head = el("div", "tr-chat-head");
-            head.appendChild(el("span", "", "💬 Chat"));
+            head.appendChild(iconEl("span", "", "chat", "Chat"));
             var closeBtn = el("button", "tr-chat-close", "✕");
             closeBtn.type = "button";
             closeBtn.setAttribute("aria-label", "Chatni yopish");
@@ -21693,7 +21736,7 @@
                 selectedMap = 0;
             }
             var mapBox = el("div", "tr-box");
-            mapBox.appendChild(el("h3", "", "🌍 Xaritani tanlang"));
+            mapBox.appendChild(iconEl("h3", "", "globe", "Xaritani tanlang"));
             var grid = el("div", "tr-maps");
             names.forEach(function(name, idx) {
                 var b = button(name, function() {
@@ -21707,17 +21750,17 @@
             });
             mapBox.appendChild(grid);
             var playersBox = el("div", "tr-box");
-            playersBox.appendChild(el("h3", "", "👥 Xonadagi maksimal oʻyinchilar"));
+            playersBox.appendChild(iconEl("h3", "", "users", "Xonadagi maksimal oʻyinchilar"));
             playersBox.appendChild(choiceRow([2, 4, 8, 16], maxPlayers, String, function(v) {
                 maxPlayers = v;
             }));
             var botsBox = el("div", "tr-box");
-            botsBox.appendChild(el("h3", "", "🤖 Botlar soni"));
+            botsBox.appendChild(iconEl("h3", "", "bot", "Botlar soni"));
             botsBox.appendChild(choiceRow([50, 100, 200, 500], botCount, String, function(v) {
                 botCount = v;
             }));
             var err = el("p", "tr-err");
-            var createBtn = button("🏠 Xona yaratish", function() {
+            var createBtn = iconButton("home", "Xona yaratish", function() {
                 createBtn.disabled = true;
                 var who = me();
                 service.create({
@@ -21740,14 +21783,14 @@
                     err.textContent = e.message;
                 });
             }, "tr-go");
-            open("🏠 Xona ochish", [mapBox, playersBox, botsBox, err], [button("⬅️ Orqaga", function() {
+            open(["home", "Xona ochish"], [mapBox, playersBox, botsBox, err], [iconButton("back", "Orqaga", function() {
                 close();
             }), createBtn]);
         }
         ;
         this.openJoin = function() {
             var box = el("div", "tr-box");
-            box.appendChild(el("h3", "", "🔎 Xona kodini kiriting"));
+            box.appendChild(iconEl("h3", "", "search", "Xona kodini kiriting"));
             var input = el("input", "tr-input");
             input.maxLength = 6;
             input.placeholder = "123456";
@@ -21762,7 +21805,7 @@
             var result = el("div", "tr-box");
             result.hidden = true;
             var found = null;
-            var joinBtn = button("➡️ Kirish", function() {
+            var joinBtn = iconButton("enter", "Kirish", function() {
                 if (!found) {
                     return;
                 }
@@ -21820,7 +21863,7 @@
                     joinBtn.click();
                 }
             });
-            open("🔎 Xonaga kirish", [box, result], [button("⬅️ Orqaga", function() {
+            open(["search", "Xonaga kirish"], [box, result], [iconButton("back", "Orqaga", function() {
                 close();
             }), joinBtn]);
             input.focus();
@@ -21845,12 +21888,12 @@
             }
             var isHost = room.hostId === session.playerId;
             var codeBox = el("div", "tr-box");
-            codeBox.appendChild(el("h3", "", "🔑 Xona kodi"));
+            codeBox.appendChild(iconEl("h3", "", "key", "Xona kodi"));
             var codeRow = el("div", "tr-code");
             codeRow.appendChild(el("b", "", room.code));
-            var copyBtn = button("📋 Nusxalash", function() {
+            var copyBtn = iconButton("copy", "Nusxalash", function() {
                 var done = function() {
-                    copyBtn.textContent = "✅ Nusxalandi";
+                    setIconText(copyBtn, "check", "Nusxalandi");
                 };
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText(room.code).then(done, done);
@@ -21862,7 +21905,7 @@
             codeBox.appendChild(codeRow);
             codeBox.appendChild(el("p", "tr-muted", "Doʻstlaringiz shu kod orqali “Xonaga kirish” boʻlimidan xonani topib qoʻshilishadi."));
             var infoBox = el("div", "tr-box");
-            infoBox.appendChild(el("h3", "", "ℹ️ Xona maʼlumotlari"));
+            infoBox.appendChild(iconEl("h3", "", "info", "Xona maʼlumotlari"));
             var infoHolder = el("div");
             infoBox.appendChild(infoHolder);
             var plBox = el("div", "tr-box");
@@ -21871,12 +21914,12 @@
             var list = el("ul", "tr-pl");
             plBox.appendChild(list);
             var chatBox = el("div", "tr-box");
-            chatBox.appendChild(el("h3", "", "💬 Chat"));
+            chatBox.appendChild(iconEl("h3", "", "chat", "Chat"));
             chatEnter(room.code, session.playerId);
             chatBox.appendChild(chatView().el);
-            var wait = el("p", "tr-wait", isHost ? "" : "⏳ Xona yaratuvchisi oʻyinni boshlashini kuting...");
+            var wait = isHost ? el("p", "tr-wait", "") : iconEl("p", "tr-wait", "wait", "Xona yaratuvchisi oʻyinni boshlashini kuting...");
             var err = el("p", "tr-err");
-            var startBtn = button("▶️ Start", function() {
+            var startBtn = iconButton("play", "Start", function() {
                 startBtn.disabled = true;
                 service.start(session.code, session.playerId).then(null, function(e) {
                     err.textContent = e.message;
@@ -21884,7 +21927,7 @@
                 });
             }, "tr-go");
             startBtn.hidden = !isHost;
-            var leaveBtn = button("🚪 Xonadan chiqish", function() {
+            var leaveBtn = iconButton("exit", "Xonadan chiqish", function() {
                 var s = session;
                 stopWatching();
                 session = null;
@@ -21894,7 +21937,7 @@
                 service.leave(s.code, s.playerId);
             });
             var footer = isHost ? [leaveBtn, startBtn] : [leaveBtn];
-            open("🏠 Xona " + room.code, [codeBox, infoBox, plBox, chatBox, wait, err], footer);
+            open(["home", "Xona " + room.code], [codeBox, infoBox, plBox, chatBox, wait, err], footer);
             function render() {
                 var r = service.get(session.code);
                 if (!r) {
@@ -21902,7 +21945,7 @@
                     session = null;
                     clearRoom();
                     chatExit();
-                    open("🏠 Xona yopildi", [el("p", "tr-wait", "Xona yaratuvchisi xonani yopdi.")], [button("⬅️ Orqaga", function() {
+                    open(["home", "Xona yopildi"], [el("p", "tr-wait", "Xona yaratuvchisi xonani yopdi.")], [iconButton("back", "Orqaga", function() {
                         close();
                     })]);
                     return;
@@ -21927,14 +21970,19 @@
                 }
                 infoHolder.textContent = "";
                 infoHolder.appendChild(infoGrid(r));
-                plTitle.textContent = "👥 Oʻyinchilar (" + r.players.length + " / " + r.maxPlayers + ")";
+                setIconText(plTitle, "users", "Oʻyinchilar (" + r.players.length + " / " + r.maxPlayers + ")");
                 list.textContent = "";
                 r.players.forEach(function(p) {
                     var li = el("li");
                     var sw = el("span", "tr-sw");
                     sw.style.background = p.color;
                     li.appendChild(sw);
-                    li.appendChild(el("span", "", (p.host ? "👑 " : "") + p.name));
+                    var nm = el("span", "tr-nm");
+                    if (p.host) {
+                        nm.innerHTML = ttIcon("crown");
+                    }
+                    nm.appendChild(document.createTextNode(p.name));
+                    li.appendChild(nm);
                     if (p.id === session.playerId) {
                         li.appendChild(el("span", "tr-me", "(siz)"));
                     }
@@ -22018,7 +22066,7 @@
             game = null;
             chatExit();
             aE.a3d(true);
-            open("⚠️ Aloqa uzildi", [el("p", "tr-wait", "Server bilan aloqa uzildi, oʻyin toʻxtatildi.")], [button("⬅️ Orqaga", function() {
+            open(["alert", "Aloqa uzildi"], [el("p", "tr-wait", "Server bilan aloqa uzildi, oʻyin toʻxtatildi.")], [iconButton("back", "Orqaga", function() {
                 close();
             })]);
         });
@@ -22046,7 +22094,7 @@
                 clearRoom();
                 return;
             }
-            open("🔄 Qayta ulanmoqda", [el("p", "tr-wait", "⏳ Xonaga qayta ulanmoqda...")], [button("⬅️ Bekor qilish", function() {
+            open(["refresh", "Qayta ulanmoqda"], [iconEl("p", "tr-wait", "wait", "Xonaga qayta ulanmoqda...")], [iconButton("back", "Bekor qilish", function() {
                 clearRoom();
                 close();
                 service.leave();
@@ -22069,12 +22117,80 @@
                 }
             }, function(e) {
                 clearRoom();
-                open("🏠 Xona topilmadi", [el("p", "tr-wait", "Xonaga qayta ulanib boʻlmadi: " + e.message)], [button("⬅️ Orqaga", function() {
+                open(["home", "Xona topilmadi"], [el("p", "tr-wait", "Xonaga qayta ulanib boʻlmadi: " + e.message)], [iconButton("back", "Orqaga", function() {
                     close();
                 })]);
             });
         }
         ;
+    }
+    // Chiziqli SVG ikonkalar (bosh menyu uslubida: 24x24, 2px chiziq, kvadrat uchlar). Emojilar o'rniga ishlatiladi.
+    var TT_ICONS = {
+        home: '<path d="M3 11 12 4l9 7"></path><path d="M5 10v10h14V10"></path><path d="M12 12v6M9 15h6"></path>',
+        swords: '<path d="M20 4 9 15"></path><path d="M20 4h-4M20 4v4"></path><path d="m6 13 5 5"></path><path d="m4 20 3-3"></path>',
+        search: '<circle cx="10" cy="10" r="6"></circle><path d="m15 15 6 6"></path>',
+        menu: '<path d="M4 6h16M4 12h16M4 18h16"></path>',
+        back: '<path d="M20 12H5"></path><path d="m11 6-6 6 6 6"></path>',
+        enter: '<path d="M4 12h15"></path><path d="m13 6 6 6-6 6"></path>',
+        play: '<path d="M7 4v16l13-8z"></path>',
+        settings: '<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path>',
+        info: '<circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7v.01"></path>',
+        trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path>',
+        globe: '<circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c3.5 3.5 3.5 14.5 0 18M12 3c-3.5 3.5-3.5 14.5 0 18"></path>',
+        users: '<circle cx="9" cy="8" r="3.5"></circle><path d="M3 20c0-3.5 2.7-5.5 6-5.5s6 2 6 5.5"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .6 3 2.6 3 5.2"></path>',
+        bot: '<rect x="5" y="8" width="14" height="12"></rect><path d="M12 4v4M9 13v2M15 13v2M9 17h6M2 13v3M22 13v3"></path>',
+        key: '<circle cx="8" cy="15" r="4"></circle><path d="m11 12 9-9M17 6l3 3M14.5 8.5l2 2"></path>',
+        copy: '<rect x="8" y="8" width="12" height="12"></rect><path d="M16 8V4H4v12h4"></path>',
+        check: '<path d="m4 12 5 5L20 6"></path>',
+        exit: '<path d="M14 4H5v16h9"></path><path d="M10 12h11M17 8l4 4-4 4"></path>',
+        refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.7"></path><path d="M20 4v5h-5"></path>',
+        alert: '<path d="M12 3 2 21h20z"></path><path d="M12 10v5M12 18v.01"></path>',
+        crown: '<path d="m3 8 4.5 4L12 5l4.5 7L21 8l-2 11H5z"></path>',
+        wait: '<path d="M6 3h12M6 21h12"></path><path d="M7 3v3l5 6-5 6v3M17 3v3l-5 6 5 6v3"></path>',
+        chat: '<path d="M4 5h16v11H9l-5 4z"></path>',
+        send: '<path d="M3 11 21 3l-8 18-2-8z"></path>',
+        list: '<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"></path>',
+        chart: '<path d="M4 20V11M10 20V5M16 20v-6M2 20h20"></path>',
+        flag: '<path d="M5 21V4h12l-2 4 2 4H5"></path>',
+        shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"></path><path d="m9 12 2 2 4-4"></path>'
+    };
+    function ttIcon(name) {
+        if (!document.getElementById("tt-icon-style")) {
+            var st = document.createElement("style");
+            st.id = "tt-icon-style";
+            st.textContent = ".tt-ic{display:inline-block;width:1.15em;height:1.15em;vertical-align:-0.2em;margin-right:0.5em;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:square;stroke-linejoin:miter}";
+            document.head.appendChild(st);
+        }
+        return '<svg class="tt-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + (TT_ICONS[name] || "") + "</svg>";
+    }
+    // Dvigatel matnlaridagi bosh emoji → ikonka (faqat dizayn yoqilgan oynalarda).
+    var TT_EMOJI_ICON = {
+        "⬅": "back",
+        "⚔": "play",
+        "🔧": "swords",
+        "☰": "menu",
+        "▶": "play",
+        "⚙": "settings",
+        "ℹ": "info",
+        "🗑": "trash",
+        "📜": "list",
+        "📊": "chart",
+        "🏳": "flag",
+        "🕊": "shield"
+    };
+    function ttIconize(root) {
+        var nodes = root.querySelectorAll("h1, .tt-btn");
+        for (var n = 0; n < nodes.length; n++) {
+            var e = nodes[n];
+            if (e.querySelector(".tt-ic")) {
+                continue;
+            }
+            var m = /^\s*([ℹ☰⚔⚙⬅▶]|\uD83D[\uDD27\uDDD1\uDCDC\uDCCA\uDD4A]|🏳)️?\s*/.exec(e.innerHTML);
+            if (!m || !TT_EMOJI_ICON[m[1]]) {
+                continue;
+            }
+            e.innerHTML = ttIcon(TT_EMOJI_ICON[m[1]]) + "<span>" + e.innerHTML.slice(m[0].length) + "</span>";
+        }
     }
     // Dvigatel oynalari (wc) uchun bosh menyu dizayni. Dvigatel inline uslub va JS hover ishlatgani uchun !important.
     function ttSkinStyle() {
@@ -22089,7 +22205,8 @@
             ".tt-skin .tt-win-bd{background:rgba(4,20,31,0.88)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}",
             ".tt-skin .tt-win-bd::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,0.14) 0px,rgba(0,0,0,0.14) 1px,transparent 1px,transparent 3px);opacity:0.5;pointer-events:none}",
             ".tt-skin .tt-win-hd{background:rgba(2,11,18,0.92)!important;border-bottom:2px solid rgba(255,255,255,0.14)!important;justify-content:center;align-items:center}",
-            ".tt-skin .tt-win-hd h1{font-family:var(--font-silkscreen),'Silkscreen',monospace!important;font-size:clamp(16px,min(4.6vw,6vh),40px)!important;font-weight:700;letter-spacing:0.02em;color:#fff;text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:94vw}",
+            ".tt-skin .tt-win-hd h1,.tt-skin .tt-win-hd h1 *{font-family:var(--font-silkscreen),'Silkscreen',monospace!important}",
+            ".tt-skin .tt-win-hd h1{font-size:clamp(16px,min(4.6vw,6vh),40px)!important;font-weight:700;letter-spacing:0.02em;color:#fff;text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:94vw}",
             ".tt-skin .tt-win-ft{background:rgba(2,11,18,0.92)!important;border-top:2px solid rgba(255,255,255,0.14)!important}",
             ".tt-skin .tt-win-ftin{display:flex;gap:12px;padding:10px 16px;box-sizing:border-box;max-width:820px;margin:0 auto}",
             ".tt-skin .tt-win-ft .tt-btn{flex:1 1 0;width:auto!important;border:2px solid #2a3f4c!important;background:#020b12!important;color:#fff!important;font-weight:700!important;box-shadow:4px 4px 0 #000;cursor:pointer;transition:transform .12s,box-shadow .12s}",
@@ -22104,9 +22221,13 @@
             ".tt-skin .tt-grid .tt-btn{font-size:17px!important;font-weight:700!important;box-shadow:4px 4px 0 #000}",
             ".tt-skin .tt-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}",
             "@media (hover:hover){.tt-skin .tt-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #000;border-color:#4d6676!important}.tt-skin .tt-win-ft .tt-btn:last-child:not(:first-child):hover{background:#258a35!important;border-color:#5fd16a!important}.tt-skin .tt-opt:hover{background:rgba(255,255,255,0.06)}}",
-            ".tt-skin .tt-opt{padding:4px 6px;margin:0 -6px!important}",
+            ".tt-skin .tt-opt{display:flex;align-items:center;gap:10px;padding:6px;margin:0 -6px!important}",
+            ".tt-skin .tt-opt-e{display:none}",
+            ".tt-skin .tt-opt::before{content:'';width:14px;height:14px;flex:none;border:2px solid #4d6676;background:#020b12;box-sizing:border-box}",
+            ".tt-skin .tt-opt[aria-checked=true]::before{background:#5fd16a;border-color:#5fd16a;box-shadow:inset 0 0 0 2px #020b12}",
             ".tt-skin .tt-input{background:#020b12!important;border:2px solid #2a3f4c!important;color:#fff!important;font-weight:600!important;padding:6px 10px!important;box-sizing:border-box}",
             ".tt-skin .tt-input:focus{border-color:#5fd16a!important}",
+            ".tt-skin .tt-win-hd h1 .tt-ic{filter:drop-shadow(3px 3px 0 #000)}",
             ".tt-skin canvas{border:2px solid #2a3f4c;box-sizing:border-box;image-rendering:auto}"
         ].join("");
         document.head.appendChild(st);
@@ -23169,7 +23290,7 @@
                 }
                 if (bm.xF.get().length) {
                     eI = Math.max(eI - 1, 0);
-                    s9.sA[eI].textContent = s9.sA[eI].textContent.replace("⚪", "🟢");
+                    s9.select(eI);
                 }
                 aQu();
             }
@@ -23219,7 +23340,7 @@
                 }
                 bm.z.xq(eI);
                 eI = bm.buffer.data[117].value;
-                s9.sA[eI].textContent = s9.sA[eI].textContent.replace("⚪", "🟢");
+                s9.select(eI);
                 aQu(eI);
             }
             ,bE.pa,1)];
