@@ -3406,12 +3406,14 @@
         this.ry = [];
         this.rz = document.createElement(S[0]);
         function dk(rz) {
+            rz.className = "tt-sec";
             rz.style.position = S[3];
             rz.style.height = S[12];
             rz.style.padding = S[19];
         }
         this.s0 = function(s1, marginTop) {
             var title = document.createElement("h2");
+            title.className = "tt-sec-h";
             title.textContent = s1;
             title.style.margin = "0";
             title.style.marginBottom = S[35];
@@ -3539,6 +3541,7 @@
         this.sb = sW;
         this.sc = sX;
         function sd(self) {
+            sa.className = "tt-btn";
             sa.innerHTML = sV;
             sa.style.color = sZ ? bE.qN : bE.pO;
             sa.style.userSelect = S[6];
@@ -3622,6 +3625,7 @@
         var rz;
         function dk() {
             rz = document.createElement(S[0]);
+            rz.className = "tt-grid";
             rz.style.display = "grid";
             rz.style.gridTemplateColumns = "repeat(auto-fill, minmax(9.5em, 1fr))";
             rz.style.overflowY = S[12];
@@ -3862,6 +3866,7 @@
         function dk() {
             var aC;
             var fZ = tm.length;
+            rz.className = "tt-row";
             rz.style.width = S[1];
             rz.style.height = "2.7em";
             rz.style.marginTop = S[35];
@@ -4030,6 +4035,7 @@
     function t7(uC, type, uD, uE) {
         this.e = document.createElement(S[27]);
         function dk(e) {
+            e.classList.add("tt-input");
             e.type = type ? S[51] : S[37];
             e.id = S[27] + (u.z.uF++);
             e.value = uC.value;
@@ -4854,6 +4860,7 @@
             var fZ = uC.oM.length;
             for (var aC = 0; aC < fZ; aC++) {
                 wb = document.createElement("p");
+                wb.className = "tt-opt";
                 wb.textContent = "⚪ " + uC.oM[aC];
                 wb.style.margin = "0";
                 wb.name = "" + aC;
@@ -4887,7 +4894,18 @@
         var wh = document.createElement(S[0]);
         this.wi = uL;
         this.wj = wd;
+        // Bosh menyu dizayni (Main Menu v2) uslubini shu oynaga yoqadi.
+        this.skin = function() {
+            ttSkinStyle();
+            ui.classList.add("tt-skin");
+        }
+        ;
         function dk() {
+            ui.className = "tt-win";
+            wf.className = "tt-win-hd";
+            uL.className = "tt-win-bd";
+            wg.className = "tt-win-ft";
+            wh.className = "tt-win-ftin";
             ui.style.position = S[3];
             ui.style.top = "0";
             ui.style.left = "0";
@@ -22058,6 +22076,41 @@
         }
         ;
     }
+    // Dvigatel oynalari (wc) uchun bosh menyu dizayni. Dvigatel inline uslub va JS hover ishlatgani uchun !important.
+    function ttSkinStyle() {
+        if (document.getElementById("tt-skin-style")) {
+            return;
+        }
+        var st = document.createElement("style");
+        st.id = "tt-skin-style";
+        st.textContent = [
+            ".tt-skin,.tt-skin *{font-family:var(--font-chakra),'Chakra Petch',system-ui,sans-serif!important}",
+            ".tt-skin{color:#eef3f5}",
+            ".tt-skin .tt-win-bd{background:rgba(4,20,31,0.88)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}",
+            ".tt-skin .tt-win-bd::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,0.14) 0px,rgba(0,0,0,0.14) 1px,transparent 1px,transparent 3px);opacity:0.5;pointer-events:none}",
+            ".tt-skin .tt-win-hd{background:rgba(2,11,18,0.92)!important;border-bottom:2px solid rgba(255,255,255,0.14)!important;justify-content:center;align-items:center}",
+            ".tt-skin .tt-win-hd h1{font-family:var(--font-silkscreen),'Silkscreen',monospace!important;font-size:clamp(16px,min(4.6vw,6vh),40px)!important;font-weight:700;letter-spacing:0.02em;color:#fff;text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:94vw}",
+            ".tt-skin .tt-win-ft{background:rgba(2,11,18,0.92)!important;border-top:2px solid rgba(255,255,255,0.14)!important}",
+            ".tt-skin .tt-win-ftin{display:flex;gap:12px;padding:10px 16px;box-sizing:border-box;max-width:820px;margin:0 auto}",
+            ".tt-skin .tt-win-ft .tt-btn{flex:1 1 0;width:auto!important;border:2px solid #2a3f4c!important;background:#020b12!important;color:#fff!important;font-weight:700!important;box-shadow:4px 4px 0 #000;cursor:pointer;transition:transform .12s,box-shadow .12s}",
+            ".tt-skin .tt-win-ft .tt-btn:last-child:not(:first-child){background:#1f7a2e!important;border-color:#5fd16a!important}",
+            ".tt-skin .tt-sec{background:rgba(5,20,30,0.8)!important;border:2px solid rgba(255,255,255,0.14)!important;box-shadow:6px 6px 0 rgba(0,0,0,0.45);box-sizing:border-box}",
+            ".tt-skin .tt-sec-h{font-size:12px!important;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#8aa2b0}",
+            ".tt-skin .tt-sec>div:not(.tt-row){color:#eef3f5}",
+            ".tt-skin .tt-row{border:0!important;display:flex;gap:8px}",
+            ".tt-skin .tt-sec .tt-btn,.tt-skin .tt-grid .tt-btn{border:2px solid #2a3f4c!important;background:#020b12!important;color:#eef3f5!important;font-weight:600!important;box-shadow:3px 3px 0 #000;cursor:pointer;transition:transform .1s,box-shadow .1s,border-color .1s}",
+            ".tt-skin .tt-row .tt-btn{flex:1 1 0;width:auto!important}",
+            ".tt-skin .tt-grid{padding:16px!important;gap:12px!important;max-width:980px;margin:0 auto}",
+            ".tt-skin .tt-grid .tt-btn{font-size:17px!important;font-weight:700!important;box-shadow:4px 4px 0 #000}",
+            ".tt-skin .tt-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}",
+            "@media (hover:hover){.tt-skin .tt-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #000;border-color:#4d6676!important}.tt-skin .tt-win-ft .tt-btn:last-child:not(:first-child):hover{background:#258a35!important;border-color:#5fd16a!important}.tt-skin .tt-opt:hover{background:rgba(255,255,255,0.06)}}",
+            ".tt-skin .tt-opt{padding:4px 6px;margin:0 -6px!important}",
+            ".tt-skin .tt-input{background:#020b12!important;border:2px solid #2a3f4c!important;color:#fff!important;font-weight:600!important;padding:6px 10px!important;box-sizing:border-box}",
+            ".tt-skin .tt-input:focus{border-color:#5fd16a!important}",
+            ".tt-skin canvas{border:2px solid #2a3f4c;box-sizing:border-box;image-rendering:auto}"
+        ].join("");
+        document.head.appendChild(st);
+    }
     // Bosh menyu (Main Menu v2 dizayni): jonli "bosib olish" fonli xarita, logo, ism va rang tanlash, 4 ta amal.
     // Dvigatelning eski menyu elementlari o'rniga aPv.show/tZ orqali qo'yiladi va olinadi.
     function MainMenu(actions) {
@@ -24930,6 +24983,7 @@
         var aRa;
         function sd() {
             aRZ = new wc("🔧 " + L(332),[new x(S[2] + L(40),aRc), new x(L(333),aT8)]);
+            aRZ.skin();
             aT9();
             aRa = new sD(aRZ.wi,aRd());
         }
@@ -27536,6 +27590,7 @@
                 ));
             }
             aQL = new wc(L(483),wd);
+            aQL.skin();
             aTf = new ss(aTg,aQL.wi);
         }
         function aV6() {
