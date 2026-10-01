@@ -12973,6 +12973,8 @@
         var lbBadgeFont;
         var lbDotGap = 0;
         var LB_MEDALS = ["#f5c542", "#cfd6e0", "#d08c5b"];
+        // Glassmorphism: panel ostidagi xarita xiralashtirilib, panel orqasiga chiziladi.
+        var glass = null;
         this.dk = function() {
             var aC;
             u.z.uS[0] = 0;
@@ -13063,14 +13065,17 @@
             }
         }
         ;
+        function lbPath(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
         function lbRound(x, y, w, h, r) {
-            aCK.beginPath();
-            aCK.moveTo(x + r, y);
-            aCK.arcTo(x + w, y, x + w, y + h, r);
-            aCK.arcTo(x + w, y + h, x, y + h, r);
-            aCK.arcTo(x, y + h, x, y, r);
-            aCK.arcTo(x, y, x + w, y, r);
-            aCK.closePath();
+            lbPath(aCK, x, y, w, h, r);
         }
         function lbRowY(xu) {
             return Math.floor(aCN + aCG + (xu + 0.5) * aCQ);
@@ -13096,14 +13101,20 @@
             aCK.save();
             lbRound(0.5, 0.5, aCE - 1, aA9 - 1, r);
             aCK.clip();
-            var g = aCK.createLinearGradient(0, 0, 0, aA9);
-            g.addColorStop(0, "rgba(24,28,42,0.93)");
-            g.addColorStop(1, "rgba(11,13,21,0.93)");
+            var g = aCK.createLinearGradient(0, 0, aCE, aA9);
+            g.addColorStop(0, "rgba(40,48,72,0.42)");
+            g.addColorStop(1, "rgba(12,15,26,0.55)");
             aCK.fillStyle = g;
             aCK.fillRect(0, 0, aCE, aA9);
-            aCK.fillStyle = aCe ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.035)";
+            var sheen = aCK.createLinearGradient(0, 0, 0, aA9);
+            sheen.addColorStop(0, "rgba(255,255,255,0.16)");
+            sheen.addColorStop(0.35, "rgba(255,255,255,0.04)");
+            sheen.addColorStop(1, "rgba(255,255,255,0)");
+            aCK.fillStyle = sheen;
+            aCK.fillRect(0, 0, aCE, aA9);
+            aCK.fillStyle = aCe ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)";
             aCK.fillRect(0, 0, aCE, aCP);
-            aCK.fillStyle = "rgba(255,255,255,0.09)";
+            aCK.fillStyle = "rgba(255,255,255,0.16)";
             aCK.fillRect(0, aCP, aCE, 1);
             var h8 = kf[aE.fJ] < position + aCI - 1 ? 1 : 2;
             if (position === 0 && kf[aE.fJ] !== 0) {
@@ -13122,6 +13133,9 @@
                     aCK.fillRect(dx, dy, 3, 1);
                 }
             }
+            aCK.shadowColor = "rgba(0,0,0,0.55)";
+            aCK.shadowBlur = Math.max(2, Math.floor(0.012 * aCE));
+            aCK.shadowOffsetY = 1;
             aCK.font = lbTitleFont;
             bD.sK.textBaseline(aCK, 1);
             bD.sK.textAlign(aCK, 1);
@@ -13141,9 +13155,78 @@
             }
             aCK.restore();
             lbRound(0.5, 0.5, aCE - 1, aA9 - 1, r);
-            aCK.strokeStyle = "rgba(255,255,255,0.16)";
+            var edge = aCK.createLinearGradient(0, 0, 0, aA9);
+            edge.addColorStop(0, "rgba(255,255,255,0.45)");
+            edge.addColorStop(0.5, "rgba(255,255,255,0.14)");
+            edge.addColorStop(1, "rgba(255,255,255,0.24)");
+            aCK.strokeStyle = edge;
             aCK.lineWidth = 1;
             aCK.stroke();
+        }
+        // Panel ostidagi xarita bo'lagini xiralashtirib beradi. ctx.filter bor joyda (Chrome, Firefox, yangi Safari)
+        // yarim o'lchamda blur, aks holda bosqichma-bosqich kichraytirish (arzon "box blur").
+        function lbGlassCanvas(key, w, h) {
+            var c = glass[key];
+            if (!c) {
+                c = glass[key] = document.createElement(S[4]);
+                glass[key + "Ctx"] = c.getContext("2d", {
+                    alpha: false
+                });
+            }
+            if (c.width !== w || c.height !== h) {
+                c.width = w;
+                c.height = h;
+            }
+            var ctx = glass[key + "Ctx"];
+            ctx.imageSmoothingEnabled = true;
+            return ctx;
+        }
+        function lbBackdrop(x, y, w, h) {
+            if (!glass) {
+                glass = {};
+                var probe = document.createElement(S[4]).getContext("2d");
+                glass.filter = typeof probe.filter === "string" && (probe.filter = "blur(2px)", probe.filter === "blur(2px)");
+            }
+            var pad = Math.ceil(0.06 * w);
+            var sx = Math.max(0, x - pad), sy = Math.max(0, y - pad);
+            var sw = Math.min(a3l.width, x + w + pad) - sx, sh = Math.min(a3l.height, y + h + pad) - sy;
+            if (sw <= 0 || sh <= 0) {
+                return null;
+            }
+            var src = {
+                c: null,
+                x: (x - sx) / sw,
+                y: (y - sy) / sh,
+                w: w / sw,
+                h: h / sh
+            };
+            var ctx;
+            if (glass.filter) {
+                var bw = Math.max(1, Math.ceil(sw / 2)), bh = Math.max(1, Math.ceil(sh / 2));
+                ctx = lbGlassCanvas("a", bw, bh);
+                ctx.filter = "blur(" + Math.max(4, Math.round(0.03 * w)) + "px) saturate(1.4)";
+                ctx.drawImage(a3l, sx, sy, sw, sh, 0, 0, bw, bh);
+                ctx.filter = "none";
+                src.c = glass.a;
+            } else {
+                var cw = sw, ch = sh, from = a3l, fx = sx, fy = sy;
+                for (var step = 0; step < 4; step++) {
+                    var nw = Math.max(1, Math.ceil(cw / 2)), nh = Math.max(1, Math.ceil(ch / 2));
+                    var key = step % 2 ? "b" : "a";
+                    ctx = lbGlassCanvas(key, nw, nh);
+                    ctx.drawImage(from, fx, fy, cw, ch, 0, 0, nw, nh);
+                    from = glass[key];
+                    fx = fy = 0;
+                    cw = nw;
+                    ch = nh;
+                }
+                src.c = from;
+            }
+            src.x *= src.c.width;
+            src.y *= src.c.height;
+            src.w *= src.c.width;
+            src.h *= src.c.height;
+            return src;
         }
         function aCm(player) {
             if (aE.iT) {
@@ -13403,7 +13486,24 @@
             return fg >= bf.gap && fg < bf.gap + aCE && fi >= bf.gap && fi < bf.gap + aA9;
         }
         this.wr = function() {
-            ws.drawImage(aCJ, bf.gap, bf.gap);
+            var x = bf.gap, y = bf.gap;
+            var src = lbBackdrop(x, y, aCE, aA9);
+            if (src) {
+                ws.save();
+                ws.setTransform(1, 0, 0, 1, 0, 0);
+                lbPath(ws, x + 0.5, y + 0.5, aCE - 1, aA9 - 1, Math.max(4, Math.floor(0.045 * aCE)));
+                ws.shadowColor = "rgba(0,0,0,0.35)";
+                ws.shadowBlur = Math.max(6, Math.floor(0.06 * aCE));
+                ws.shadowOffsetY = Math.max(2, Math.floor(0.012 * aCE));
+                ws.fillStyle = "rgba(10,12,20,0.6)";
+                ws.fill();
+                ws.shadowColor = "transparent";
+                ws.clip();
+                ws.imageSmoothingEnabled = true;
+                ws.drawImage(src.c, src.x, src.y, src.w, src.h, x, y, aCE, aA9);
+                ws.restore();
+            }
+            ws.drawImage(aCJ, x, y);
         }
         ;
     }
