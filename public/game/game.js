@@ -10134,7 +10134,7 @@
             canvas = document.createElement(S[4]);
             canvas.width = k;
             canvas.height = k;
-            a7u = bD.sK.u8(1, (a1.a2.ik() ? 0.5 : 0.45) * k);
+            a7u = ttFont("700", (a1.a2.ik() ? 0.46 : 0.42) * k);
             a7y();
         }
         ;
@@ -10144,23 +10144,11 @@
                 alpha: true
             });
             ou.clearRect(0, 0, k, k);
-            ou.fillStyle = bE.pK;
-            ou.fillRect(0, 0, k, k);
-            if (a7v === 9) {
-                ou.fillStyle = bE.pP;
-                ou.fillRect(0, 0, k, k);
-            }
-            ou.fillStyle = bE.pO;
-            ou.fillRect(0, 0, k, 1);
-            ou.fillRect(0, 0, 1, k);
-            ou.fillRect(0, k - 1, k, 1);
-            ou.fillRect(k - 1, 0, 1, k);
-            a7z = 0.9 * k / ac.get(0).width;
-            ou.imageSmoothingEnabled = true;
-            ou.setTransform(a7z, 0, 0, a7z, Math.floor((k - a7z * ac.get(0).width) / 2), Math.floor((k - a7z * ac.get(0).height) / 2));
-            ou.drawImage(ac.get(0), 0, 0);
-            ou.setTransform(1, 0, 0, 1, 0, 0);
+            ttButton(ou, 0, 0, k, k, a7v === 9);
+            a7z = Math.floor(0.56 * k);
+            ttCanvasIcon(ou, "exit", Math.floor((k - a7z) / 2), Math.floor((k - a7z) / 2), a7z, "#ffffff");
         }
+
         this.a80 = function() {
             return !(aE.a2G !== 1 || aE.hx || (aE.hi ? !bF.a73 : (this.hj && aE.lE)));
         }
@@ -10284,6 +10272,7 @@
                 a85();
                 ws.setTransform(1, 0, 0, 1, 0, 0);
             } else {
+                ttBackdrop(bf.gap, aS.fi, k, k, false);
                 ws.drawImage(canvas, bf.gap, aS.fi);
             }
         }
@@ -10295,25 +10284,19 @@
         function a84() {
             var fZ;
             var j = Math.floor(5.5 * k);
+            ttBackdrop(bf.gap, aS.fi, j, k, false);
             ws.setTransform(1, 0, 0, 1, bf.gap, aS.fi);
-            ws.fillStyle = bE.pK;
-            ws.fillRect(0, 0, j, k);
-            if (a7v === 0) {
-                ws.fillStyle = bE.pP;
-                ws.fillRect(0, 0, 4 * k, k);
-            } else if (a7v === 1) {
-                ws.fillStyle = bE.pP;
-                ws.fillRect(4 * k, 0, Math.floor(1.5 * k), k);
-            }
-            ws.fillStyle = bE.pO;
-            ws.fillRect(0, 0, j, 1);
-            ws.fillRect(0, 0, 1, k);
-            ws.fillRect(4 * k, 0, 1, k);
-            ws.fillRect(0, k - 1, j, 1);
-            ws.fillRect(j - 1, 0, 1, k);
-            ws.font = a7u;
+            // "O'yindan chiqish" (qizg'ish urg'u) va yopish (×)
+            ws.fillStyle = a7v === 0 ? "#7a2a2a" : "#4a1a1d";
+            ws.fillRect(0, 0, 4 * k, k);
+            ws.strokeStyle = "#e0605f";
+            ws.lineWidth = 2;
+            ws.strokeRect(1, 1, 4 * k - 2, k - 2);
+            ttButton(ws, 4 * k, 0, j - 4 * k, k, a7v === 1);
+            fitText(L(45), 3.6 * k);
             bD.sK.textBaseline(ws, 1);
             bD.sK.textAlign(ws, 1);
+            ws.fillStyle = "#ffffff";
             ws.fillText(L(45), 2 * k, 0.54 * k);
             fZ = 0.4 * k;
             aN.a86(bf.gap + 4 * k + (1.5 * k - fZ) / 2, aS.fi + 0.3 * k, fZ);
@@ -10321,25 +10304,30 @@
         function a85() {
             a87(1);
         }
-        function a87(aC) {
-            ws.setTransform(1, 0, 0, 1, bf.gap, aS.fi - aC * a7w * bf.gap - aC * k);
-            ws.fillStyle = bE.pK;
-            ws.fillRect(0, 0, 4 * k, k);
-            if (a7v === aC + 1) {
-                ws.fillStyle = bE.pP;
-                ws.fillRect(0, 0, 4 * k, k);
+        // Matnni tugma kengligiga sig'diradi (telefonda "O'yindan chiqish" uzun).
+        function fitText(text, maxW) {
+            ws.font = a7u;
+            var w = ws.measureText(text).width;
+            if (w > maxW) {
+                ws.font = ttFont("700", ((a1.a2.ik() ? 0.46 : 0.42) * k) * maxW / w);
             }
-            ws.fillStyle = bE.pO;
-            ws.fillRect(0, 0, 4 * k, 1);
-            ws.fillRect(0, 0, 1, k);
-            ws.fillRect(4 * k, 0, 1, k);
-            ws.fillRect(0, k - 1, 4 * k, 1);
+        }
+        function a87(aC) {
+            var y = aS.fi - aC * a7w * bf.gap - aC * k;
+            ttBackdrop(bf.gap, y, 4 * k, k, false);
+            ws.setTransform(1, 0, 0, 1, bf.gap, y);
+            ttButton(ws, 0, 0, 4 * k, k, a7v === aC + 1);
+            fitText(aC === 0 ? L(45) : L(46), 3.6 * k);
+            bD.sK.textBaseline(ws, 1);
+            bD.sK.textAlign(ws, 1);
+            ws.fillStyle = "#ffffff";
             ws.fillText(aC === 0 ? L(45) : L(46), 2 * k, 0.54 * k);
         }
         this.a86 = function(fg, fi, fZ) {
             ws.setTransform(1, 0, 0, 1, fg, fi);
-            ws.lineWidth = bf.a1E;
-            ws.strokeStyle = bE.pO;
+            ws.lineWidth = Math.max(2, bf.a1E);
+            ws.lineCap = "square";
+            ws.strokeStyle = "#ffffff";
             ws.beginPath();
             ws.moveTo(0, 0);
             ws.lineTo(fZ, fZ);
@@ -11940,7 +11928,7 @@
                 this.k = Math.floor(j / 12);
             }
             aAW = Math.floor(3 * this.k / 2);
-            a7u = bD.sK.u8(1, Math.floor(0.5 * this.k));
+            a7u = ttFont("700", Math.floor(0.5 * this.k));
             canvas = document.createElement(S[4]);
             canvas.width = j;
             canvas.height = this.k;
@@ -11985,29 +11973,44 @@
             }
         }
         function aAZ() {
+            var k = aS.k;
             var a9Y = Math.floor(jC * (j - 2 * aAW));
-            var aAc = 1 + Math.floor(0.0625 * aS.k);
-            var aAd = 1 + Math.floor(0.3 * aS.k);
-            var aAe = Math.floor(0.55 * aS.k);
-            ou.clearRect(0, 0, j, aS.k);
-            ou.fillStyle = bE.pK;
-            ou.fillRect(0, 0, aAW, aS.k);
-            ou.fillRect(aAW + a9Y, 0, j - aAW - a9Y, aS.k);
+            var aAc = Math.max(2, Math.floor(0.075 * k));
+            var aAd = 1 + Math.floor(0.3 * k);
+            var aAe = Math.floor(0.54 * k);
+            ou.clearRect(0, 0, j, k);
+            // Trek va −/+ tugmalari (bosh menyudagi to'q tugmalar kabi)
+            ou.fillStyle = "#020b12";
+            ou.fillRect(0, 0, j, k);
+            ou.fillStyle = "#0a1a24";
+            ou.fillRect(0, 0, aAW, k);
+            ou.fillRect(j - aAW, 0, aAW, k);
             ou.fillStyle = aAa();
-            ou.fillRect(aAW, 0, a9Y, aS.k);
-            ou.fillStyle = bE.pO;
-            ou.fillRect(0, 0, j, 1);
-            ou.fillRect(0, aS.k - 1, j, 1);
-            ou.fillRect(0, 0, 1, aS.k);
-            ou.fillRect(aAW, 0, 1, aS.k);
-            ou.fillRect(aAW + a9Y, 0, 1, aS.k);
-            ou.fillRect(j - aAW, 0, 1, aS.k);
-            ou.fillRect(j - 1, 0, 1, aS.k);
-            ou.fillRect(Math.floor(0.25 * aS.k) + aAd, Math.floor((aS.k - aAc) / 2), aS.k - 2 * aAd, aAc);
-            ou.fillRect(Math.floor(j - 1.25 * aS.k) + aAd, Math.floor((aS.k - aAc) / 2), aS.k - 2 * aAd - aAd % 2, aAc);
-            ou.fillRect(Math.floor(j - 1.25 * aS.k) + Math.floor((aS.k - aAc) / 2), aAd, aAc, aS.k - 2 * aAd - aAd % 2);
+            ou.fillRect(aAW, 0, a9Y, k);
+            ou.fillStyle = "rgba(255,255,255,0.10)";
+            ou.fillRect(aAW, 0, a9Y, Math.max(2, Math.floor(0.08 * k)));
+            ou.fillStyle = "#2a3f4c";
+            ou.fillRect(aAW - 1, 0, 2, k);
+            ou.fillRect(j - aAW - 1, 0, 2, k);
+            if (a9Y > 0 && a9Y < j - 2 * aAW) {
+                ou.fillStyle = "rgba(255,255,255,0.85)";
+                ou.fillRect(aAW + a9Y - 1, 0, 2, k);
+            }
+            ou.strokeStyle = "#2a3f4c";
+            ou.lineWidth = 2;
+            ou.strokeRect(1, 1, j - 2, k - 2);
+            ou.fillStyle = "#ffffff";
+            var mx = Math.floor((aAW - (k - 2 * aAd)) / 2);
+            ou.fillRect(mx, Math.floor((k - aAc) / 2), k - 2 * aAd, aAc);
+            var px = j - aAW + Math.floor((aAW - (k - 2 * aAd)) / 2);
+            ou.fillRect(px, Math.floor((k - aAc) / 2), k - 2 * aAd, aAc);
+            ou.fillRect(px + Math.floor((k - 2 * aAd - aAc) / 2), aAd, aAc, k - 2 * aAd);
             a6P = bD.gv.jB(aE.fJ, aS.i3());
+            ou.save();
+            ou.font = a7u;
+            ttHardShadow(ou, true, Math.max(1, Math.floor(0.05 * k)));
             ou.fillText(bD.tI.a1X(a6P) + " (" + bD.tI.a6I(100 * jC, +(jC < 0.1)) + ")", Math.floor(0.5 * j), aAe);
+            ou.restore();
         }
         this.iL = function() {
             return !(!iL || aN.hj && fg < Math.floor(bf.gap + 5.5 * this.k));
@@ -12136,6 +12139,7 @@
             if (!this.iL()) {
                 return;
             }
+            ttBackdrop(fg, this.fi, j, this.k, false);
             ws.drawImage(canvas, fg, this.fi);
         }
         ;
@@ -12567,21 +12571,19 @@
             jE = (jE + mA) * a4e - mA;
             aT.aBG();
         }
+        // Masshtab tugmalari (+ / −): bosh menyudagi to'q kvadrat tugmalar kabi.
         function aB9() {
-            var aBP = Math.floor(1 + j / 20);
+            var t = Math.max(3, Math.round(0.09 * j));
+            var len = Math.round(0.42 * j);
             for (var aC = 1; aC >= 0; aC--) {
-                aB6[aC].clearRect(0, 0, j, j);
-                aB6[aC].fillStyle = bE.pH;
-                aB6[aC].beginPath();
-                aB6[aC].arc(j / 2, j / 2, j / 2 - aBP, 0, 2 * Math.PI);
-                aB6[aC].fill();
-                aB6[aC].lineWidth = aBP;
-                aB6[aC].fillStyle = bE.pO;
-                aB6[aC].strokeStyle = bE.pO;
-                aB6[aC].beginPath();
-                aB6[aC].arc(j / 2, j / 2, j / 2 - aBP, 0, 2 * Math.PI);
-                aB6[aC].stroke();
-                a0S(aB6[aC], 0, 0, j, aBP, 0.3, aC === 0);
+                var c = aB6[aC];
+                c.clearRect(0, 0, j, j);
+                ttButton(c, 0, 0, j, j, false);
+                c.fillStyle = "#ffffff";
+                c.fillRect(Math.round((j - len) / 2), Math.round((j - t) / 2), len, t);
+                if (aC === 0) {
+                    c.fillRect(Math.round((j - t) / 2), Math.round((j - len) / 2), t, len);
+                }
             }
         }
         this.aAY = function() {
@@ -12593,7 +12595,9 @@
             if (bm.buffer.data[8].value) {
                 return;
             }
+            ttBackdrop(fg, fi, j, j, false);
             ws.drawImage(aB5[0], fg, fi);
+            ttBackdrop(fg, Math.floor(fi + 3 * j / 2), j, j, false);
             ws.drawImage(aB5[1], fg, Math.floor(fi + 3 * j / 2));
         }
         ;
@@ -13012,8 +13016,6 @@
         var lbBadgeFont;
         var lbDotGap = 0;
         var LB_MEDALS = ["#f5c542", "#cfd6e0", "#d08c5b"];
-        // Glassmorphism: panel ostidagi xarita xiralashtirilib, panel orqasiga chiziladi.
-        var glass = null;
         this.dk = function() {
             var aC;
             u.z.uS[0] = 0;
@@ -13072,14 +13074,14 @@
             aCQ = (aA9 - aCG - 2 * aCN - aCO) / aCI;
             aCF = bD.sK.u8(1, Math.floor(0.55 * aCG));
             aCf = Math.floor((a1.a2.ik() ? 0.67 : 0.72) * aCQ);
-            aCH = bD.sK.u8(0, aCf);
+            aCH = ttFont("600", aCf);
             aCK.font = aCH;
             aCR = Math.floor(0.04 * aCE);
             aCS = Math.floor((a1.a2.ik() ? 0.195 : 0.18) * aCE);
             aCL = Math.floor(aCK.measureText("00920600").width);
-            lbTitleFont = bD.sK.u8(1, Math.floor(0.34 * aCG));
-            lbScoreFont = bD.sK.u8(1, Math.floor(0.86 * aCf));
-            lbBadgeFont = bD.sK.u8(1, Math.floor(0.64 * aCf));
+            lbTitleFont = ttFont("700", Math.floor(0.3 * aCG), true);
+            lbScoreFont = ttFont("700", Math.floor(0.86 * aCf));
+            lbBadgeFont = ttFont("700", Math.floor(0.62 * aCf));
             lbDotGap = Math.floor(0.7 * aCf);
             aCK.font = aCF;
             aCT = aCE - aCR;
@@ -13104,18 +13106,6 @@
             }
         }
         ;
-        function lbPath(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + w, y, x + w, y + h, r);
-            ctx.arcTo(x + w, y + h, x, y + h, r);
-            ctx.arcTo(x, y + h, x, y, r);
-            ctx.arcTo(x, y, x + w, y, r);
-            ctx.closePath();
-        }
-        function lbRound(x, y, w, h, r) {
-            lbPath(aCK, x, y, w, h, r);
-        }
         function lbRowY(xu) {
             return Math.floor(aCN + aCG + (xu + 0.5) * aCQ);
         }
@@ -13135,55 +13125,44 @@
         }
         function aCj() {
             var fs;
-            var r = Math.max(4, Math.floor(0.045 * aCE));
             aCK.clearRect(0, 0, aCE, aA9);
             aCK.save();
-            lbRound(0.5, 0.5, aCE - 1, aA9 - 1, r);
-            aCK.clip();
-            var g = aCK.createLinearGradient(0, 0, aCE, aA9);
-            g.addColorStop(0, "rgba(40,48,72,0.42)");
-            g.addColorStop(1, "rgba(12,15,26,0.55)");
-            aCK.fillStyle = g;
-            aCK.fillRect(0, 0, aCE, aA9);
-            var sheen = aCK.createLinearGradient(0, 0, 0, aA9);
-            sheen.addColorStop(0, "rgba(255,255,255,0.16)");
-            sheen.addColorStop(0.35, "rgba(255,255,255,0.04)");
-            sheen.addColorStop(1, "rgba(255,255,255,0)");
-            aCK.fillStyle = sheen;
-            aCK.fillRect(0, 0, aCE, aA9);
-            aCK.fillStyle = aCe ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)";
-            aCK.fillRect(0, 0, aCE, aCP);
+            ttCard(aCK, aCE, aA9, "rgba(5,20,30,0.78)");
+            aCK.fillStyle = aCe ? "rgba(255,255,255,0.08)" : "rgba(2,11,18,0.55)";
+            aCK.fillRect(2, 2, aCE - 4, aCP - 2);
             aCK.fillStyle = "rgba(255,255,255,0.16)";
-            aCK.fillRect(0, aCP, aCE, 1);
+            aCK.fillRect(2, aCP, aCE - 4, 2);
             var h8 = kf[aE.fJ] < position + aCI - 1 ? 1 : 2;
             if (position === 0 && kf[aE.fJ] !== 0) {
-                aCl(0, "rgba(245,197,66,0.08)");
+                aCl(0, "rgba(242,193,78,0.10)");
             }
             if (aCZ !== -1) {
-                aCl(aCZ, "rgba(255,255,255,0.07)");
+                aCl(aCZ, "rgba(255,255,255,0.08)");
             }
             if (kf[aE.fJ] >= position) {
-                aCl(kf[aE.fJ] - position, "rgba(46,204,113,0.17)", "#2ecc71");
+                aCl(kf[aE.fJ] - position, "rgba(31,122,46,0.55)", "#5fd16a");
             }
             if (h8 === 2) {
                 var dy = Math.floor(lbRowY(aCI - 1) - 0.5 * aCQ);
-                aCK.fillStyle = "rgba(255,255,255,0.14)";
+                aCK.fillStyle = "rgba(255,255,255,0.16)";
                 for (var dx = Math.floor(0.05 * aCE); dx < 0.95 * aCE; dx += 6) {
                     aCK.fillRect(dx, dy, 3, 1);
                 }
             }
-            aCK.shadowColor = "rgba(0,0,0,0.55)";
-            aCK.shadowBlur = Math.max(2, Math.floor(0.012 * aCE));
-            aCK.shadowOffsetY = 1;
+            // Sarlavha: kubok ikonkasi + "REYTING" (Silkscreen, qattiq soya)
             aCK.font = lbTitleFont;
             bD.sK.textBaseline(aCK, 1);
-            bD.sK.textAlign(aCK, 1);
-            lbSpacing(Math.max(1, Math.floor(0.012 * aCE)));
-            aCK.fillStyle = "rgba(255,255,255,0.55)";
-            aCK.fillText("🏆", Math.floor(aCE / 2 - 0.5 * aCK.measureText(aCh).width - 0.5 * aCG), Math.floor(aCP / 2));
-            aCK.fillStyle = "rgba(255,255,255,0.94)";
-            aCK.fillText(aCh, Math.floor(aCE / 2 + 0.12 * aCG), Math.floor(aCP / 2));
+            bD.sK.textAlign(aCK, 0);
+            lbSpacing(Math.max(1, Math.floor(0.01 * aCE)));
+            var tw = aCK.measureText(aCh).width;
+            var isz = Math.floor(0.42 * aCG);
+            var tx = Math.floor((aCE - tw - isz - 0.18 * aCG) / 2);
+            ttCanvasIcon(aCK, "trophy", tx, Math.floor((aCP - isz) / 2), isz, "#f2c14e");
+            ttHardShadow(aCK, true, Math.max(1, Math.floor(0.008 * aCE)));
+            aCK.fillStyle = "#ffffff";
+            aCK.fillText(aCh, tx + isz + Math.floor(0.18 * aCG), Math.floor(aCP / 2) + 1);
             lbSpacing(0);
+            ttHardShadow(aCK, true, 1);
             for (fs = aCI - h8; fs >= 0; fs--) {
                 aCn(fs, fs + position, mV[fs + position]);
                 aCo(fs, mV[fs + position]);
@@ -13193,79 +13172,6 @@
                 aCo(aCI - 1, aE.fJ);
             }
             aCK.restore();
-            lbRound(0.5, 0.5, aCE - 1, aA9 - 1, r);
-            var edge = aCK.createLinearGradient(0, 0, 0, aA9);
-            edge.addColorStop(0, "rgba(255,255,255,0.45)");
-            edge.addColorStop(0.5, "rgba(255,255,255,0.14)");
-            edge.addColorStop(1, "rgba(255,255,255,0.24)");
-            aCK.strokeStyle = edge;
-            aCK.lineWidth = 1;
-            aCK.stroke();
-        }
-        // Panel ostidagi xarita bo'lagini xiralashtirib beradi. ctx.filter bor joyda (Chrome, Firefox, yangi Safari)
-        // yarim o'lchamda blur, aks holda bosqichma-bosqich kichraytirish (arzon "box blur").
-        function lbGlassCanvas(key, w, h) {
-            var c = glass[key];
-            if (!c) {
-                c = glass[key] = document.createElement(S[4]);
-                glass[key + "Ctx"] = c.getContext("2d", {
-                    alpha: false
-                });
-            }
-            if (c.width !== w || c.height !== h) {
-                c.width = w;
-                c.height = h;
-            }
-            var ctx = glass[key + "Ctx"];
-            ctx.imageSmoothingEnabled = true;
-            return ctx;
-        }
-        function lbBackdrop(x, y, w, h) {
-            if (!glass) {
-                glass = {};
-                var probe = document.createElement(S[4]).getContext("2d");
-                glass.filter = typeof probe.filter === "string" && (probe.filter = "blur(2px)", probe.filter === "blur(2px)");
-            }
-            var pad = Math.ceil(0.06 * w);
-            var sx = Math.max(0, x - pad), sy = Math.max(0, y - pad);
-            var sw = Math.min(a3l.width, x + w + pad) - sx, sh = Math.min(a3l.height, y + h + pad) - sy;
-            if (sw <= 0 || sh <= 0) {
-                return null;
-            }
-            var src = {
-                c: null,
-                x: (x - sx) / sw,
-                y: (y - sy) / sh,
-                w: w / sw,
-                h: h / sh
-            };
-            var ctx;
-            if (glass.filter) {
-                var bw = Math.max(1, Math.ceil(sw / 2)), bh = Math.max(1, Math.ceil(sh / 2));
-                ctx = lbGlassCanvas("a", bw, bh);
-                ctx.filter = "blur(" + Math.max(4, Math.round(0.03 * w)) + "px) saturate(1.4)";
-                ctx.drawImage(a3l, sx, sy, sw, sh, 0, 0, bw, bh);
-                ctx.filter = "none";
-                src.c = glass.a;
-            } else {
-                var cw = sw, ch = sh, from = a3l, fx = sx, fy = sy;
-                for (var step = 0; step < 4; step++) {
-                    var nw = Math.max(1, Math.ceil(cw / 2)), nh = Math.max(1, Math.ceil(ch / 2));
-                    var key = step % 2 ? "b" : "a";
-                    ctx = lbGlassCanvas(key, nw, nh);
-                    ctx.drawImage(from, fx, fy, cw, ch, 0, 0, nw, nh);
-                    from = glass[key];
-                    fx = fy = 0;
-                    cw = nw;
-                    ch = nh;
-                }
-                src.c = from;
-            }
-            src.x *= src.c.width;
-            src.y *= src.c.height;
-            src.w *= src.c.width;
-            src.h *= src.c.height;
-            return src;
         }
         function aCm(player) {
             if (aE.iT) {
@@ -13274,15 +13180,17 @@
         }
         function aCl(aC, aCs, accent) {
             aC = aC > aCI - 1 ? aCI - 1 : aC;
-            var inset = Math.max(2, Math.floor(0.018 * aCE));
+            var inset = Math.max(4, Math.floor(0.018 * aCE));
             var top = Math.floor(lbRowY(aC) - 0.5 * aCQ) + 1;
             var h = Math.floor(aCQ) - 2;
             aCK.fillStyle = aCs;
-            lbRound(inset, top, aCE - 2 * inset, h, Math.max(2, Math.floor(0.22 * aCQ)));
-            aCK.fill();
+            aCK.fillRect(inset, top, aCE - 2 * inset, h);
             if (accent) {
+                aCK.strokeStyle = accent;
+                aCK.lineWidth = 2;
+                aCK.strokeRect(inset + 1, top + 1, aCE - 2 * inset - 2, h - 2);
                 aCK.fillStyle = accent;
-                aCK.fillRect(inset, top + Math.floor(0.2 * h), Math.max(2, Math.floor(0.012 * aCE)), Math.ceil(0.6 * h));
+                aCK.fillRect(inset, top, Math.max(3, Math.floor(0.014 * aCE)), h);
             }
         }
         function aCp() {}
@@ -13291,33 +13199,36 @@
             var isMe = aC === aE.fJ;
             bD.sK.textBaseline(aCK, 1);
             if (a5y < 3) {
-                var br = Math.floor(0.39 * aCQ);
-                var bx = aCR + br;
+                // Medal: kvadrat piksel nishon
+                var bs = Math.floor(0.74 * aCQ);
+                var by = Math.floor(fi - bs / 2);
+                ttHardShadow(aCK, false);
+                aCK.fillStyle = "#000";
+                aCK.fillRect(aCR + 2, by + 2, bs, bs);
                 aCK.fillStyle = LB_MEDALS[a5y];
-                aCK.beginPath();
-                aCK.arc(bx, fi, br, 0, 2 * Math.PI);
-                aCK.fill();
+                aCK.fillRect(aCR, by, bs, bs);
                 aCK.font = lbBadgeFont;
                 bD.sK.textAlign(aCK, 1);
-                aCK.fillStyle = "rgba(20,22,30,0.92)";
-                aCK.fillText(String(a5y + 1), bx, fi + 1);
+                aCK.fillStyle = "#14161e";
+                aCK.fillText(String(a5y + 1), aCR + bs / 2, fi + 1);
+                ttHardShadow(aCK, true, 1);
             } else {
-                aCK.font = aCH;
+                aCK.font = ttFont("600", 0.8 * aCf);
                 bD.sK.textAlign(aCK, 0);
-                aCK.fillStyle = "rgba(255,255,255,0.45)";
+                aCK.fillStyle = "#6f8796";
                 aCK.fillText(String(a5y + 1), aCR, fi);
             }
             var dr = Math.max(3, Math.floor(0.25 * aCf));
+            ttHardShadow(aCK, false);
             aCK.fillStyle = lbPlayerColor(aC);
-            aCK.beginPath();
-            aCK.arc(aCS + dr, fi, dr, 0, 2 * Math.PI);
-            aCK.fill();
-            aCK.strokeStyle = "rgba(255,255,255,0.35)";
+            aCK.fillRect(aCS, fi - dr, 2 * dr, 2 * dr);
+            aCK.strokeStyle = "rgba(255,255,255,0.55)";
             aCK.lineWidth = 1;
-            aCK.stroke();
-            aCK.font = (isMe ? S[40] + " " : ah.a5a[aC] === 1 ? S[98] : "") + aCH;
+            aCK.strokeRect(aCS + 0.5, fi - dr + 0.5, 2 * dr - 1, 2 * dr - 1);
+            ttHardShadow(aCK, true, 1);
+            aCK.font = (ah.a5a[aC] === 1 ? S[98] : "") + (isMe ? ttFont("700", aCf) : aCH);
             bD.sK.textAlign(aCK, 0);
-            aCK.fillStyle = isMe ? "#ffffff" : aC < aE.ku ? "rgba(255,255,255,0.92)" : "rgba(214,220,232,0.72)";
+            aCK.fillStyle = isMe ? "#ffffff" : aC < aE.ku ? "#eef3f5" : "#b9c8d0";
             aCm(aC);
             aCK.fillText(ah.a0j[aC], aCS + lbDotGap, fi);
             aCK.font = aCH;
@@ -13326,7 +13237,7 @@
             aCK.font = lbScoreFont;
             bD.sK.textBaseline(aCK, 1);
             bD.sK.textAlign(aCK, 2);
-            aCK.fillStyle = aC === aE.fJ ? "#7dffb0" : "rgba(255,255,255,0.9)";
+            aCK.fillStyle = aC === aE.fJ ? "#7dffb0" : "#ffffff";
             aCK.fillText(bD.tI.a1X(ah.hN[aC]), aCT, lbRowY(xu));
             aCK.font = aCH;
         }
@@ -13526,22 +13437,7 @@
         }
         this.wr = function() {
             var x = bf.gap, y = bf.gap;
-            var src = lbBackdrop(x, y, aCE, aA9);
-            if (src) {
-                ws.save();
-                ws.setTransform(1, 0, 0, 1, 0, 0);
-                lbPath(ws, x + 0.5, y + 0.5, aCE - 1, aA9 - 1, Math.max(4, Math.floor(0.045 * aCE)));
-                ws.shadowColor = "rgba(0,0,0,0.35)";
-                ws.shadowBlur = Math.max(6, Math.floor(0.06 * aCE));
-                ws.shadowOffsetY = Math.max(2, Math.floor(0.012 * aCE));
-                ws.fillStyle = "rgba(10,12,20,0.6)";
-                ws.fill();
-                ws.shadowColor = "transparent";
-                ws.clip();
-                ws.imageSmoothingEnabled = true;
-                ws.drawImage(src.c, src.x, src.y, src.w, src.h, x, y, aCE, aA9);
-                ws.restore();
-            }
+            ttBackdrop(x, y, aCE, aA9, true);
             ws.drawImage(aCJ, x, y);
         }
         ;
@@ -13612,7 +13508,7 @@
             aD8 = this.k;
             this.k -= Math.floor(aDI * (this.k - 2 * aBq) / aDB.length);
             fontSize = Math.floor(0.7 * (aD8 - aBq) / aDB.length);
-            var a7u = bD.sK.u8(1, fontSize);
+            var a7u = ttFont("500", fontSize);
             canvas = document.createElement(S[4]);
             canvas.width = this.j;
             canvas.height = this.k;
@@ -13655,36 +13551,36 @@
         ;
         function aDM() {
             var fD;
+            var bar = Math.max(aBq, 3);
             ou.clearRect(0, 0, aX.j, aX.k);
-            ou.fillStyle = bE.pL;
-            ou.fillRect(0, 0, aX.j, aX.k);
-            ou.fillStyle = bE.pi;
+            ou.save();
+            ttCard(ou, aX.j, aX.k, "rgba(5,20,30,0.82)");
+            // Pastki progress chizig'i (hudud ulushi / boshlanishgacha vaqt)
+            ou.fillStyle = "#020b12";
+            ou.fillRect(2, aX.k - bar - 2, aX.j - 4, bar);
+            ou.fillStyle = "#5fd16a";
             fD = aDG > 0 ? aDG : (aDD[4] / 10000);
-            ou.fillRect(0, aX.k - aBq - 1, Math.floor(fD * aX.j), aBq);
-            ou.fillStyle = bE.pO;
-            ou.fillRect(0, 0, aX.j, 1);
-            ou.fillRect(0, 0, 1, aX.k);
-            ou.fillRect(aX.j - 1, 0, 1, aX.k);
-            ou.fillRect(0, aX.k - 1, aX.j, 1);
-            ou.fillRect(0, aX.k - aBq - 1, aX.j, 1);
+            ou.fillRect(2, aX.k - bar - 2, Math.floor(fD * (aX.j - 4)), bar);
+            ou.fillStyle = "rgba(255,255,255,0.16)";
+            ou.fillRect(2, aX.k - bar - 4, aX.j - 4, 2);
             var ea = 0;
+            ttHardShadow(ou, true, 1);
             for (var aC = 0; aC < aDC.length; aC++) {
                 if (!aDE[aC]) {
                     ea++;
                     continue;
                 }
-                bD.sK.textAlign(ou, 0);
                 var aDO = Math.floor(((aD8 - aBq) + 2 * aD9) * (aC - ea + 1) / (aDC.length + 1) - 0.7 * aD9);
+                bD.sK.textAlign(ou, 0);
+                ou.font = ttFont("500", fontSize);
+                ou.fillStyle = "#8aa2b0";
                 ou.fillText(aDC[aC], gap, aDO);
                 bD.sK.textAlign(ou, 2);
-                if (aC === 5 && ah.nU[aE.fJ] !== 0 && ah.hb[aE.fJ] >= af.ka(aE.fJ)) {
-                    ou.fillStyle = bE.qK;
-                    ou.fillText(aDK(aC), aX.j - gap, aDO);
-                    ou.fillStyle = bE.pO;
-                } else {
-                    ou.fillText(aDK(aC), aX.j - gap, aDO);
-                }
+                ou.font = ttFont("700", fontSize);
+                ou.fillStyle = aC === 5 && ah.nU[aE.fJ] !== 0 && ah.hb[aE.fJ] >= af.ka(aE.fJ) ? "#ff7a7a" : "#ffffff";
+                ou.fillText(aDK(aC), aX.j - gap, aDO);
             }
+            ou.restore();
         }
         function aDK(aC) {
             if (aC < 3) {
@@ -13867,6 +13763,7 @@
         }
         ;
         this.wr = function() {
+            ttBackdrop(fg, fi, aX.j, aX.k, true);
             ws.drawImage(canvas, fg, fi);
         }
         ;
@@ -22152,7 +22049,8 @@
         list: '<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"></path>',
         chart: '<path d="M4 20V11M10 20V5M16 20v-6M2 20h20"></path>',
         flag: '<path d="M5 21V4h12l-2 4 2 4H5"></path>',
-        shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"></path><path d="m9 12 2 2 4-4"></path>'
+        shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"></path><path d="m9 12 2 2 4-4"></path>',
+        trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0z"></path><path d="M7 6H3v2a4 4 0 0 0 4 4M17 6h4v2a4 4 0 0 1-4 4M12 14v4M8 21h8M9 18h6"></path>'
     };
     function ttIcon(name) {
         if (!document.getElementById("tt-icon-style")) {
@@ -22191,6 +22089,166 @@
             }
             e.innerHTML = ttIcon(TT_EMOJI_ICON[m[1]]) + "<span>" + e.innerHTML.slice(m[0].length) + "</span>";
         }
+    }
+    // ---- O'yin ichidagi canvas HUD uchun bosh menyu dizayni ----
+    var TT_FAMILY = null;
+    function ttFont(weight, px, pixel) {
+        if (!TT_FAMILY) {
+            var cs = getComputedStyle(document.documentElement);
+            TT_FAMILY = {
+                chakra: (cs.getPropertyValue("--font-chakra").trim() || "'Chakra Petch'") + ", system-ui, sans-serif",
+                pixel: (cs.getPropertyValue("--font-silkscreen").trim() || "'Silkscreen'") + ", monospace"
+            };
+            // Canvas shriftni o'zi yuklamaydi — oldindan yuklab qo'yamiz.
+            if (document.fonts && document.fonts.load) {
+                ["500", "600", "700"].forEach(function(w) {
+                    document.fonts.load(w + " 16px " + TT_FAMILY.chakra).catch(function() {});
+                });
+                document.fonts.load("700 16px " + TT_FAMILY.pixel).catch(function() {});
+            }
+        }
+        return weight + " " + Math.max(1, Math.round(px)) + "px " + (pixel ? TT_FAMILY.pixel : TT_FAMILY.chakra);
+    }
+    // TT_ICONS dagi SVG ikonkani canvas'ga chizadi (Path2D).
+    var TT_PATHS = {};
+    function ttCanvasIcon(ctx, name, x, y, size, color) {
+        var paths = TT_PATHS[name];
+        if (!paths) {
+            paths = TT_PATHS[name] = [];
+            var src = TT_ICONS[name] || "", m;
+            var re = /<(path|circle|rect)([^>]*)>/g;
+            while ((m = re.exec(src))) {
+                var a = {};
+                m[2].replace(/([a-z]+)="([^"]*)"/g, function(_, k, v) {
+                    a[k] = v;
+                });
+                var p2;
+                if (m[1] === "path") {
+                    p2 = new Path2D(a.d);
+                } else {
+                    p2 = new Path2D();
+                    if (m[1] === "circle") {
+                        p2.arc(+a.cx, +a.cy, +a.r, 0, 2 * Math.PI);
+                    } else {
+                        p2.rect(+a.x, +a.y, +a.width, +a.height);
+                    }
+                }
+                paths.push(p2);
+            }
+        }
+        ctx.save();
+        ctx.shadowColor = "transparent";
+        ctx.translate(x, y);
+        ctx.scale(size / 24, size / 24);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.lineCap = "square";
+        ctx.lineJoin = "miter";
+        for (var n = 0; n < paths.length; n++) {
+            ctx.stroke(paths[n]);
+        }
+        ctx.restore();
+    }
+    // Panel orqasi: qattiq qora soya (menyudagi kartalar kabi) va ixtiyoriy xiralashtirilgan fon.
+    // ctx.filter bor joyda yarim o'lchamda blur, aks holda bosqichma-bosqich kichraytirish (arzon "box blur").
+    var ttGlass = null;
+    function ttGlassCanvas(key, w, h) {
+        var c = ttGlass[key];
+        if (!c) {
+            c = ttGlass[key] = document.createElement(S[4]);
+            ttGlass[key + "Ctx"] = c.getContext("2d", {
+                alpha: false
+            });
+        }
+        if (c.width !== w || c.height !== h) {
+            c.width = w;
+            c.height = h;
+        }
+        var ctx = ttGlass[key + "Ctx"];
+        ctx.imageSmoothingEnabled = true;
+        return ctx;
+    }
+    function ttBlurSource(x, y, w, h) {
+        if (!ttGlass) {
+            ttGlass = {};
+            var probe = document.createElement(S[4]).getContext("2d");
+            ttGlass.filter = typeof probe.filter === "string" && (probe.filter = "blur(2px)", probe.filter === "blur(2px)");
+        }
+        var pad = Math.ceil(0.06 * w);
+        var sx = Math.max(0, x - pad), sy = Math.max(0, y - pad);
+        var sw = Math.min(a3l.width, x + w + pad) - sx, sh = Math.min(a3l.height, y + h + pad) - sy;
+        if (sw <= 0 || sh <= 0) {
+            return null;
+        }
+        var src = {
+            c: null,
+            x: (x - sx) / sw,
+            y: (y - sy) / sh,
+            w: w / sw,
+            h: h / sh
+        };
+        var ctx;
+        if (ttGlass.filter) {
+            var bw = Math.max(1, Math.ceil(sw / 2)), bh = Math.max(1, Math.ceil(sh / 2));
+            ctx = ttGlassCanvas("a", bw, bh);
+            ctx.filter = "blur(" + Math.max(4, Math.round(0.03 * w)) + "px)";
+            ctx.drawImage(a3l, sx, sy, sw, sh, 0, 0, bw, bh);
+            ctx.filter = "none";
+            src.c = ttGlass.a;
+        } else {
+            var cw = sw, ch = sh, from = a3l, fx = sx, fy = sy;
+            for (var step = 0; step < 4; step++) {
+                var nw = Math.max(1, Math.ceil(cw / 2)), nh = Math.max(1, Math.ceil(ch / 2));
+                var key = step % 2 ? "b" : "a";
+                ctx = ttGlassCanvas(key, nw, nh);
+                ctx.drawImage(from, fx, fy, cw, ch, 0, 0, nw, nh);
+                from = ttGlass[key];
+                fx = fy = 0;
+                cw = nw;
+                ch = nh;
+            }
+            src.c = from;
+        }
+        src.x *= src.c.width;
+        src.y *= src.c.height;
+        src.w *= src.c.width;
+        src.h *= src.c.height;
+        return src;
+    }
+    function ttBackdrop(x, y, w, h, blur) {
+        var off = Math.max(3, Math.round(0.006 * i.il));
+        ws.save();
+        ws.setTransform(1, 0, 0, 1, 0, 0);
+        ws.fillStyle = "rgba(0,0,0,0.45)";
+        ws.fillRect(x + off, y + off, w, h);
+        var src = blur ? ttBlurSource(x, y, w, h) : null;
+        if (src) {
+            ws.imageSmoothingEnabled = true;
+            ws.drawImage(src.c, src.x, src.y, src.w, src.h, x, y, w, h);
+        }
+        ws.restore();
+    }
+    // Karta: to'q fon va 2px chegara (bosh menyudagi .mm-card kabi).
+    function ttCard(ctx, w, h, bg) {
+        ctx.fillStyle = bg || "rgba(5,20,30,0.8)";
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = "rgba(255,255,255,0.16)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, w - 2, h - 2);
+    }
+    // Bosh menyudagi to'q tugma: fon, 2px chegara; hover'da biroz yorqinroq.
+    function ttButton(ctx, x, y, w, h, hover) {
+        ctx.fillStyle = hover ? "#0f2633" : "#020b12";
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = hover ? "#4d6676" : "#2a3f4c";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+    }
+    function ttHardShadow(ctx, on, px) {
+        ctx.shadowColor = on ? "rgba(0,0,0,0.85)" : "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = on ? (px || 1) : 0;
+        ctx.shadowOffsetY = on ? (px || 1) : 0;
     }
     // Dvigatel oynalari (wc) uchun bosh menyu dizayni. Dvigatel inline uslub va JS hover ishlatgani uchun !important.
     function ttSkinStyle() {
