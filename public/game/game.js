@@ -22055,6 +22055,546 @@
         }
         ;
     }
+    // Bosh menyu (Main Menu v2 dizayni): jonli "bosib olish" fonli xarita, logo, ism va rang tanlash, 4 ta amal.
+    // Dvigatelning eski menyu elementlari o'rniga aPv.show/tZ orqali qo'yiladi va olinadi.
+    function MainMenu(actions) {
+        var COLORS = ["#e8508f", "#f2564b", "#f28a3c", "#f2c14e", "#a8d65a", "#5fd16a", "#2fb89a", "#3fb6c4", "#5aa8f0", "#6a6cf0", "#a66af0", "#f0f0f0"];
+        var W = 384, H = 216, LAND = 0.5, SEED = 7;
+        var root = null;
+        var refs = null;
+        var raf = 0;
+        var color = COLORS[0];
+        var mx = 0, my = 0, cx = 0, cy = 0, t0 = 0, last = 0;
+        var map = null;
+        function hex(h) {
+            return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+        }
+        // Dvigatel rangi 6 bitli komponentlarda saqlanadi (0..63).
+        function toCode(h) {
+            var c = hex(h);
+            return (Math.round(c[0] / 255 * 63) << 12) + (Math.round(c[1] / 255 * 63) << 6) + Math.round(c[2] / 255 * 63);
+        }
+        function fromCode(g1) {
+            var c = [(g1 >> 12) & 63, (g1 >> 6) & 63, g1 & 63].map(function(v) {
+                return Math.round(v / 63 * 255);
+            });
+            return "#" + c.map(function(v) {
+                return (v < 16 ? "0" : "") + v.toString(16);
+            }).join("");
+        }
+        function injectStyle() {
+            if (document.getElementById("tt-menu-style")) {
+                return;
+            }
+            var st = document.createElement("style");
+            st.id = "tt-menu-style";
+            st.textContent = [
+                ".mm{position:fixed;inset:0;font-family:var(--font-chakra),'Chakra Petch',system-ui,sans-serif;color:#eef3f5;overflow:hidden;background:#04141f;-webkit-user-select:none;user-select:none}",
+                ".mm canvas{position:absolute;left:-6%;top:-6%;width:112%;height:112%;image-rendering:pixelated;will-change:transform}",
+                ".mm-vig{position:absolute;inset:0;background:radial-gradient(ellipse 50% 58% at 50% 52%,rgba(3,14,22,0.62) 0%,rgba(3,14,22,0.25) 60%,rgba(3,14,22,0.8) 100%);pointer-events:none}",
+                ".mm-scan{position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,0.14) 0px,rgba(0,0,0,0.14) 1px,transparent 1px,transparent 3px);pointer-events:none;opacity:0.5}",
+                ".mm-top{position:absolute;top:20px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:13px;letter-spacing:0.08em;color:#b9c8d0}",
+                ".mm-top>div{display:flex;align-items:center;gap:10px;white-space:nowrap}",
+                ".mm-led{width:8px;height:8px;background:#5fd16a;box-shadow:0 0 10px #5fd16a}",
+                ".mm-ver{color:#6f8796}",
+                ".mm-wrap{position:absolute;inset:0;display:flex;align-items:safe center;justify-content:center;padding:64px 24px 24px;box-sizing:border-box;overflow-y:auto}",
+                ".mm-col{width:100%;max-width:540px;display:flex;flex-direction:column;align-items:center;gap:32px}",
+                ".mm-logo{display:flex;align-items:center;gap:18px;max-width:100%}",
+                ".mm-flag{display:grid;grid-template-columns:repeat(3,8px);gap:2px;flex:none}",
+                ".mm-flag i{width:8px;height:8px}",
+                ".mm h1{margin:0;font-family:var(--font-silkscreen),'Silkscreen',monospace;font-weight:700;font-size:clamp(22px,min(6.5vw,9vh),66px);line-height:1;letter-spacing:0.02em;color:#fff;text-shadow:5px 5px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000;white-space:nowrap}",
+                ".mm-card{width:100%;background:rgba(5,20,30,0.8);border:2px solid rgba(255,255,255,0.14);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:20px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px;box-shadow:0 30px 80px rgba(0,0,0,0.5),6px 6px 0 rgba(0,0,0,0.45)}",
+                ".mm-field{display:flex;flex-direction:column;gap:10px}",
+                ".mm-lbl{display:flex;justify-content:space-between;align-items:baseline}",
+                ".mm-lbl span:first-child{font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8aa2b0}",
+                ".mm-lbl span:last-child{font-size:11px;letter-spacing:0.12em;color:#6f8796}",
+                ".mm-name{display:flex;align-items:center;height:56px;background:#020b12;border:2px solid #2a3f4c;box-sizing:border-box}",
+                ".mm-name i{width:12px;align-self:stretch;flex:none}",
+                ".mm-name input{flex:1;min-width:0;height:100%;box-sizing:border-box;background:transparent;border:none;color:#fff;font-family:inherit;font-size:22px;font-weight:600;padding:0 14px;outline:none;-webkit-user-select:text;user-select:text}",
+                ".mm-name input::placeholder{color:#6f8796}",
+                ".mm-sw{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px}",
+                ".mm-sw button{aspect-ratio:1;padding:0;cursor:pointer;border:2px solid rgba(0,0,0,0.4);transition:transform .1s}",
+                ".mm-sw button:hover{transform:translateY(-2px)}",
+                ".mm-sw button[aria-pressed=true]{border-color:#fff}",
+                ".mm-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}",
+                ".mm-act{height:clamp(84px,15vh,118px);color:#fff;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding:14px 16px;font-family:inherit;box-shadow:4px 4px 0 #000;transition:transform .12s,box-shadow .12s,background .12s;border:2px solid}",
+                ".mm-act:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000}",
+                ".mm-act:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}",
+                ".mm-act .mm-row{display:flex;width:100%;justify-content:space-between;align-items:center}",
+                ".mm-act .mm-key{font-size:11px;border:1px solid rgba(255,255,255,0.5);padding:2px 6px}",
+                ".mm-act .mm-t{font-size:20px;font-weight:700;text-align:left;line-height:1.15}",
+                ".mm-a1{background:#1f7a2e;border-color:#5fd16a}.mm-a1:hover{background:#258a35}",
+                ".mm-a2{background:rgba(14,80,92,0.78);border-color:#3fb6c4}.mm-a2:hover{background:rgba(18,96,110,0.92)}",
+                ".mm-a3{background:rgba(110,72,30,0.78);border-color:#d9a35a}.mm-a3:hover{background:rgba(128,84,36,0.92)}",
+                ".mm-a4{background:rgba(80,54,72,0.78);border-color:#c48aac}.mm-a4:hover{background:rgba(96,64,86,0.92)}",
+                "@media (max-width:420px){.mm-logo{gap:10px}.mm-card{padding:16px}.mm-sw{gap:4px}.mm-act .mm-t{font-size:18px}}"
+            ].join("");
+            document.head.appendChild(st);
+        }
+        function el(tag, cls, text) {
+            var e = document.createElement(tag);
+            if (cls) {
+                e.className = cls;
+            }
+            if (text !== undefined) {
+                e.textContent = text;
+            }
+            return e;
+        }
+        var FLAG_L = [1, 1, 0, 1, 1, 1, 2, 0, 0];
+        var FLAG_R = [0, 1, 1, 1, 1, 1, 0, 0, 2];
+        function flag(cells) {
+            var f = el("div", "mm-flag");
+            f.setAttribute("aria-hidden", "true");
+            cells.forEach(function(v) {
+                var c = el("i");
+                c.dataset.v = v;
+                f.appendChild(c);
+            });
+            return f;
+        }
+        var ICONS = ['<path d="M3 11 12 4l9 7"></path><path d="M5 10v10h14V10"></path><path d="M12 12v6M9 15h6"></path>', '<path d="M20 4 9 15"></path><path d="M20 4h-4M20 4v4"></path><path d="m6 13 5 5"></path><path d="m4 20 3-3"></path>', '<circle cx="10" cy="10" r="6"></circle><path d="m15 15 6 6"></path>', '<path d="M4 6h16M4 12h16M4 18h16"></path>'];
+        var TITLES = ["Xona ochish", "Maxsus ssenariy", "Xonaga kirish", "Oʻyin menyusi"];
+        function build() {
+            injectStyle();
+            root = el("section", "mm");
+            root.setAttribute("aria-label", "Bosh menyu");
+            var canvas = el("canvas");
+            canvas.setAttribute("aria-hidden", "true");
+            root.appendChild(canvas);
+            root.appendChild(el("div", "mm-vig"));
+            root.appendChild(el("div", "mm-scan"));
+            var top = el("div", "mm-top");
+            var left = el("div");
+            left.appendChild(el("div", "mm-led"));
+            var nations = el("span");
+            left.appendChild(nations);
+            var right = el("div");
+            var ver = String(m.e3 || "");
+            var mt = /^(.*?)\s*\[(.*)\]$/.exec(ver);
+            right.appendChild(el("span", "", mt ? mt[1] : ver));
+            if (mt) {
+                right.appendChild(el("span", "mm-ver", "v" + mt[2]));
+            }
+            top.appendChild(left);
+            top.appendChild(right);
+            root.appendChild(top);
+            var wrap = el("div", "mm-wrap");
+            var col = el("div", "mm-col");
+            var logo = el("div", "mm-logo");
+            logo.appendChild(flag(FLAG_L));
+            var h1 = el("h1");
+            h1.appendChild(document.createTextNode("TERRITORIAL"));
+            var dot = el("span", "", ".");
+            h1.appendChild(dot);
+            h1.appendChild(document.createTextNode("IO"));
+            logo.appendChild(h1);
+            logo.appendChild(flag(FLAG_R));
+            col.appendChild(logo);
+            var card = el("div", "mm-card");
+            var field = el("div", "mm-field");
+            var lbl = el("div", "mm-lbl");
+            lbl.appendChild(el("span", "", "Oʻyinchi"));
+            var len = el("span");
+            lbl.appendChild(len);
+            field.appendChild(lbl);
+            var nameRow = el("div", "mm-name");
+            var stripe = el("i");
+            nameRow.appendChild(stripe);
+            var input = el("input");
+            input.type = "text";
+            input.maxLength = 20;
+            input.placeholder = "Ismingiz";
+            input.autocomplete = "off";
+            input.spellcheck = false;
+            input.setAttribute("aria-label", "Oʻyinchi nomi");
+            input.value = String(bm.buffer.data[122].value || "");
+            nameRow.appendChild(input);
+            field.appendChild(nameRow);
+            var sw = el("div", "mm-sw");
+            sw.setAttribute("role", "group");
+            sw.setAttribute("aria-label", "Rang");
+            var swatches = COLORS.map(function(h) {
+                var b = el("button");
+                b.type = "button";
+                b.style.background = h;
+                b.setAttribute("aria-label", "Rang " + h);
+                b.addEventListener("click", function() {
+                    bm.qo.qp(121, toCode(h));
+                    setColor(h);
+                });
+                sw.appendChild(b);
+                return b;
+            });
+            field.appendChild(sw);
+            card.appendChild(field);
+            var acts = el("div", "mm-acts");
+            var buttons = TITLES.map(function(t, n) {
+                var b = el("button", "mm-act mm-a" + (n + 1));
+                b.type = "button";
+                b.dataset.k = String(n + 1);
+                var row = el("div", "mm-row");
+                row.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true">' + ICONS[n] + "</svg>";
+                row.appendChild(el("span", "mm-key", String(n + 1)));
+                b.appendChild(row);
+                b.appendChild(el("span", "mm-t", t));
+                b.addEventListener("click", function() {
+                    actions[n]();
+                });
+                acts.appendChild(b);
+                return b;
+            });
+            card.appendChild(acts);
+            col.appendChild(card);
+            wrap.appendChild(col);
+            root.appendChild(wrap);
+            function saveName() {
+                bm.qo.qp(122, input.value);
+            }
+            input.addEventListener("input", function() {
+                len.textContent = input.value.length + "/20";
+            });
+            // Dvigatel kiritish maydoni fokusda ekanini bilsin (tezkor tugmalar o'chadi).
+            input.addEventListener("focus", function() {
+                i.uG++;
+            });
+            input.addEventListener("blur", function() {
+                i.uG--;
+                saveName();
+            });
+            input.addEventListener("keydown", function(e) {
+                e.stopPropagation();
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    input.blur();
+                }
+            });
+            refs = {
+                canvas: canvas,
+                ctx: canvas.getContext("2d"),
+                nations: nations,
+                len: len,
+                input: input,
+                stripe: stripe,
+                dot: dot,
+                flags: logo.querySelectorAll(".mm-flag i"),
+                swatches: swatches,
+                buttons: buttons
+            };
+            len.textContent = input.value.length + "/20";
+            canvas.width = W;
+            canvas.height = H;
+            refs.img = refs.ctx.createImageData(W, H);
+            var g1 = bm.buffer.data[121].value;
+            setColor(g1 >= 0 ? fromCode(g1) : COLORS[0], true);
+        }
+        function setColor(h, init) {
+            color = h;
+            var code = toCode(h);
+            refs.stripe.style.background = h;
+            refs.dot.style.color = h;
+            Array.prototype.forEach.call(refs.flags, function(c) {
+                c.style.background = c.dataset.v === "1" ? h : c.dataset.v === "2" ? "#ffffff" : "transparent";
+            });
+            refs.swatches.forEach(function(b, idx) {
+                var on = toCode(COLORS[idx]) === code;
+                b.setAttribute("aria-pressed", String(on));
+                b.style.boxShadow = on ? "0 0 0 2px #020b12, 0 0 12px " + COLORS[idx] : "none";
+            });
+            if (map && !init) {
+                map.seeds[0].c = hex(h);
+                paint();
+            }
+        }
+        // ---- Fon: protsedurali orol va davlatlarning jonli kengayishi ----
+        function buildMap() {
+            var hash = function(x, y) {
+                var h = (x * 374761393 + y * 668265263 + SEED * 982451653) | 0;
+                h = (h ^ (h >>> 13)) * 1274126177;
+                return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+            };
+            var sm = function(t) {
+                return t * t * (3 - 2 * t);
+            };
+            var noise = function(x, y) {
+                var xi = Math.floor(x), yi = Math.floor(y), xf = sm(x - xi), yf = sm(y - yi);
+                var a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+                return a + (b - a) * xf + (c - a) * yf + (a - b - c + d) * xf * yf;
+            };
+            var fbm = function(x, y) {
+                var v = 0, a = 0.5, f = 1;
+                for (var k = 0; k < 6; k++) {
+                    v += a * noise(x * f, y * f);
+                    f *= 2;
+                    a *= 0.5;
+                }
+                return v;
+            };
+            var E = new Float32Array(W * H);
+            var x, y;
+            for (y = 0; y < H; y++) {
+                for (x = 0; x < W; x++) {
+                    var nx = x / W, ny = y / H, dx = nx - 0.5, dy = (ny - 0.5) * 0.8;
+                    E[y * W + x] = fbm(nx * 4.2, ny * 2.4) - Math.sqrt(dx * dx + dy * dy) * 0.35 + 0.08;
+                }
+            }
+            var mix = function(a, b, t) {
+                return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+            };
+            var L = LAND;
+            var ramp = function(e) {
+                if (e < 0.36) return mix(hex("#03121e"), hex("#082e46"), Math.max(0, (e - 0.15) / 0.21));
+                if (e < L - 0.015) return mix(hex("#0a3a56"), hex("#1a6884"), (e - 0.36) / (L - 0.015 - 0.36));
+                if (e < L) return hex("#1c241f");
+                if (e < L + 0.02) return hex("#7d7564");
+                if (e < 0.66) return mix(hex("#1a5a22"), hex("#3a8634"), (e - L - 0.02) / (0.66 - L - 0.02));
+                if (e < 0.76) return mix(hex("#4e6a3a"), hex("#8a8670"), (e - 0.66) / 0.1);
+                return hex("#c4bfb0");
+            };
+            var base = new Uint8ClampedArray(W * H * 3);
+            var land = 0;
+            for (y = 0; y < H; y++) {
+                for (x = 0; x < W; x++) {
+                    var idx = y * W + x, e = E[idx], col = ramp(e);
+                    if (e > L) {
+                        land++;
+                        var sh = (e - E[Math.max(0, y - 1) * W + Math.max(0, x - 1)]) * 6;
+                        col = col.map(function(v) {
+                            return v * (1 + sh);
+                        });
+                    }
+                    base[idx * 3] = col[0];
+                    base[idx * 3 + 1] = col[1];
+                    base[idx * 3 + 2] = col[2];
+                }
+            }
+            map = {
+                E: E,
+                base: base,
+                land: land,
+                round: 0
+            };
+            resetMap();
+        }
+        function resetMap() {
+            var E = map.E, L = LAND;
+            map.round++;
+            var r = function(a, b) {
+                var h = (a * 2654435761 + b * 40503 + map.round * 977 + SEED * 131) >>> 0;
+                h ^= h >>> 15;
+                h = Math.imul(h, 2246822519) >>> 0;
+                h ^= h >>> 13;
+                return (h >>> 0) / 4294967295;
+            };
+            var pal = [color, "#f2c14e", "#5aa8f0", "#f2564b", "#a66af0", "#f28a3c", "#2fb89a", "#a8d65a", "#6a6cf0", "#f0f0f0"];
+            var seeds = [], tries = 0;
+            while (seeds.length < 10 && tries < 4000) {
+                tries++;
+                var x = Math.floor(r(tries, 1) * W), y = Math.floor(r(1, tries) * H);
+                var far = seeds.every(function(s) {
+                    return Math.hypot(s.x - x, s.y - y) > 30;
+                });
+                if (E[y * W + x] > L + 0.02 && far) {
+                    seeds.push({
+                        x: x,
+                        y: y,
+                        c: hex(pal[seeds.length]),
+                        rate: 3 + r(tries, tries) * 7,
+                        size: 0,
+                        front: []
+                    });
+                }
+            }
+            var own = new Int8Array(W * H).fill(-1);
+            seeds.forEach(function(s, k) {
+                for (var dy = -2; dy <= 2; dy++) {
+                    for (var dx = -2; dx <= 2; dx++) {
+                        var xx = s.x + dx, yy = s.y + dy;
+                        if (xx < 0 || yy < 0 || xx >= W || yy >= H) {
+                            continue;
+                        }
+                        var q = yy * W + xx;
+                        if (E[q] > L && own[q] < 0) {
+                            own[q] = k;
+                            s.size++;
+                            s.front.push(q);
+                        }
+                    }
+                }
+            });
+            map.seeds = seeds;
+            map.own = own;
+            map.done = 0;
+            setNations(seeds.length);
+        }
+        function setNations(n) {
+            if (map.nations !== n) {
+                map.nations = n;
+                refs.nations.textContent = "Xaritada " + n + " ta davlat";
+            }
+        }
+        var DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        function step() {
+            var E = map.E, own = map.own, seeds = map.seeds, L = LAND;
+            if (map.done) {
+                if (--map.done === 0) {
+                    resetMap();
+                }
+                return;
+            }
+            var owned = 0;
+            seeds.forEach(function(s, k) {
+                var n = Math.min(s.front.length, Math.round(s.rate));
+                for (var j = 0; j < n; j++) {
+                    var fi = (Math.random() * s.front.length) | 0, q0 = s.front[fi];
+                    s.front[fi] = s.front[s.front.length - 1];
+                    s.front.pop();
+                    if (own[q0] !== k) {
+                        continue;
+                    }
+                    var x = q0 % W, y = (q0 / W) | 0, open = false;
+                    for (var d = 0; d < 4; d++) {
+                        var xx = x + DIRS[d][0], yy = y + DIRS[d][1];
+                        if (xx < 0 || yy < 0 || xx >= W || yy >= H) {
+                            continue;
+                        }
+                        var q = yy * W + xx;
+                        if (E[q] <= L) {
+                            continue;
+                        }
+                        var o = own[q];
+                        if (o === -1 || (o !== k && Math.random() < 0.012 * Math.min(2, s.size / (seeds[o].size + 1)))) {
+                            if (o >= 0) {
+                                seeds[o].size--;
+                            }
+                            own[q] = k;
+                            s.size++;
+                            s.front.push(q);
+                            open = true;
+                        } else if (o !== k) {
+                            open = true;
+                        }
+                    }
+                    if (open) {
+                        s.front.push(q0);
+                    }
+                }
+                owned += s.size;
+            });
+            setNations(seeds.filter(function(s) {
+                return s.size > 0;
+            }).length);
+            if (owned > map.land * 0.97) {
+                map.done = 60;
+            }
+        }
+        function paint() {
+            var own = map.own, seeds = map.seeds, base = map.base, d = refs.img.data;
+            for (var y = 0; y < H; y++) {
+                for (var x = 0; x < W; x++) {
+                    var q = y * W + x, o = own[q];
+                    var r = base[q * 3], g = base[q * 3 + 1], b = base[q * 3 + 2];
+                    if (o >= 0) {
+                        var pc = seeds[o].c;
+                        var edge = (x > 0 && own[q - 1] !== o) || (x < W - 1 && own[q + 1] !== o) || (y > 0 && own[q - W] !== o) || (y < H - 1 && own[q + W] !== o);
+                        if (edge) {
+                            r = pc[0] * 0.85 + 38;
+                            g = pc[1] * 0.85 + 38;
+                            b = pc[2] * 0.85 + 38;
+                        } else {
+                            r = r * 0.55 + pc[0] * 0.45;
+                            g = g * 0.55 + pc[1] * 0.45;
+                            b = b * 0.55 + pc[2] * 0.45;
+                        }
+                    }
+                    d[q * 4] = r;
+                    d[q * 4 + 1] = g;
+                    d[q * 4 + 2] = b;
+                    d[q * 4 + 3] = 255;
+                }
+            }
+            refs.ctx.putImageData(refs.img, 0, 0);
+        }
+        function loop() {
+            if (!root) {
+                return;
+            }
+            var now = performance.now();
+            cx += (mx - cx) * 0.05;
+            cy += (my - cy) * 0.05;
+            var t = (now - t0) / 1000;
+            var dx = Math.sin(t * 0.05) * 2, dy = Math.cos(t * 0.04) * 1.6;
+            refs.canvas.style.transform = "translate(" + (dx - cx * 1.5) + "%, " + (dy - cy * 1.5) + "%) scale(1.03)";
+            if (now - last > 90) {
+                last = now;
+                step();
+                paint();
+            }
+            raf = requestAnimationFrame(loop);
+        }
+        function onMove(e) {
+            mx = e.clientX / window.innerWidth - 0.5;
+            my = e.clientY / window.innerHeight - 0.5;
+        }
+        function onKey(e) {
+            if (!root || e.target.tagName === "INPUT" || e.ctrlKey || e.metaKey || e.altKey) {
+                return;
+            }
+            var k = ["1", "2", "3", "4"].indexOf(e.key);
+            if (k < 0) {
+                return;
+            }
+            var b = refs.buttons[k];
+            if (b.animate) {
+                b.animate([{
+                    transform: "translate(2px,2px)",
+                    boxShadow: "1px 1px 0 #000"
+                }, {
+                    transform: "none"
+                }], {
+                    duration: 180
+                });
+            }
+            actions[k]();
+        }
+        this.show = function() {
+            if (root) {
+                return;
+            }
+            build();
+            if (!map) {
+                buildMap();
+            } else {
+                map.seeds[0].c = hex(color);
+                map.nations = -1;
+                setNations(map.seeds.filter(function(s) {
+                    return s.size > 0;
+                }).length);
+            }
+            paint();
+            document.body.appendChild(root);
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("keydown", onKey);
+            t0 = t0 || performance.now();
+            raf = requestAnimationFrame(loop);
+        };
+        this.hide = function() {
+            if (!root) {
+                return;
+            }
+            if (document.activeElement === refs.input) {
+                refs.input.blur();
+            }
+            cancelAnimationFrame(raf);
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("keydown", onKey);
+            if (root.parentNode) {
+                root.parentNode.removeChild(root);
+            }
+            root = null;
+            refs = null;
+        };
+    }
     function dJ() {
         this.z = new aPn();
         this.ua = 0;
@@ -24874,6 +25414,7 @@
         var t6;
         var aTW;
         var u3 = 0;
+        var mainMenu;
         this.aJ7 = new uh();
         function dk() {
             aSa = new su([0.9 * 0.5, 0.9 * 0.3],[0.5, 0.5],2 / 3);
@@ -24900,6 +25441,19 @@
             t6.e.style.position = S[3];
             t6.e.style.textAlign = S[11];
             t6.e.placeholder = L(352);
+            mainMenu = new MainMenu([function() {
+                (aRoomUI || (aRoomUI = new RoomUI())).openCreate();
+            }
+            , function() {
+                aTX(1);
+            }
+            , function() {
+                (aRoomUI || (aRoomUI = new RoomUI())).openJoin();
+            }
+            , function() {
+                aTX(3);
+            }
+            ]);
         }
         dk();
         function aTX(eI) {
@@ -24928,12 +25482,9 @@
             ab.setState(0);
             a1.a2.setState(12);
             this.aJ7.show();
-            aTV[4].se(bD.color.a5C(bm.buffer.data[121].value));
             this.resize();
-            document.body.appendChild(t6.e);
-            for (var aC = 0; aC < aTV.length; aC++) {
-                document.body.appendChild(aTV[aC].button);
-            }
+            // Eski ism maydoni va tugmalar o'rniga yangi bosh menyu (Main Menu v2).
+            mainMenu.show();
             aTZ();
         }
         ;
@@ -24956,10 +25507,7 @@
         }
         this.tZ = function() {
             this.aJ7.tZ();
-            u.removeChild(document.body, t6.e);
-            for (var aC = 0; aC < aTV.length; aC++) {
-                u.removeChild(document.body, aTV[aC].button);
-            }
+            mainMenu.hide();
         }
         ;
         this.resize = function() {
