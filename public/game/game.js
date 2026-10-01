@@ -3824,8 +3824,19 @@
     function th(ti, sV, tj) {
         sV = sV || L(15);
         this.e = document.createElement("p");
+        // Belgi alohida span'da va aria-checked bilan: yangi uslubda chizilgan katakcha ko'rsatiladi.
+        function mark(e, on) {
+            e.setAttribute("aria-checked", String(!!on));
+            e.firstChild.textContent = on ? "🟩" : "⬜";
+        }
         function dk(e) {
-            e.textContent = (ti.value ? "🟩 " : "⬜ ") + sV;
+            e.className = "tt-chk";
+            e.setAttribute("role", "checkbox");
+            var m = document.createElement(S[17]);
+            m.className = "tt-opt-e";
+            e.appendChild(m);
+            e.appendChild(document.createTextNode(" " + sV));
+            mark(e, ti.value);
             e.style.margin = "0";
             e.style.marginBottom = S[19];
             e.style.cursor = S[39];
@@ -3833,7 +3844,7 @@
         }
         function click() {
             var value = 1 - ti.value;
-            this.textContent = (value ? "🟩 " : "⬜ ") + sV;
+            mark(this, value);
             if (ti.eI !== undefined) {
                 bm.qo.qp(ti.eI, value);
             } else {
@@ -3989,6 +4000,7 @@
             ty.style.whiteSpace = S[25];
             ty.textContent = s1;
             bD.sK.sU(ty, 5);
+            ty.classList.add("tt-font");
             ty.style.font = bD.sK.u8(0, bD.sK.tb(0.015));
             ty.style.padding = "0.3em 0.6em";
             ty.style.left = fg + "px";
@@ -4187,6 +4199,7 @@
         ;
         function sN() {
             var aC, fs;
+            sE.classList.add("tt-font");
             sE.style.font = bD.sK.u8(0, bD.sK.ue(0.026, 0.5, 0.03));
             for (aC = 1; aC < uN.length; aC++) {
                 bD.sK.sU(uN[aC], 4);
@@ -4346,8 +4359,11 @@
             var vZ = bD.sK.tb(0.04 + 0.02 * vW);
             var va = bD.sK.tb(vU * 0.02 + 0.01 * vW);
             var vb = bD.sK.tb(0.025);
+            v7.classList.add("tt-font");
             v7.style.font = bD.sK.u8(0, vb);
+            vB.classList.add("tt-font");
             vB.style.font = bD.sK.u8(0, 0.9 * vb);
+            vG.classList.add("tt-font");
             vG.style.font = bD.sK.u8(0, 0.9 * vb);
             if (vU < 1) {
                 var vc = bD.sK.u8(0, vU * vb);
@@ -4358,11 +4374,13 @@
                 vA.style.font = vc;
             }
             v8.style.height = bD.sK.sT(vV);
+            v8.classList.add("tt-font");
             v8.style.font = bD.sK.u8(0, 0.72 * vV);
             bD.sK.sU(v8, 2);
             v9.style.top = bD.sK.sT(vV);
             v9.style.height = bD.sK.sT(vY);
             bD.sK.sU(v9, 2);
+            vA.classList.add("tt-font");
             vA.style.font = bD.sK.u8(0, vU * bD.sK.tb(0.02));
             vA.style.top = bD.sK.sT(vV + vY);
             vA.style.height = bD.sK.sT(vZ);
@@ -4375,6 +4393,7 @@
             vD.style.top = bD.sK.sT(i.k / i.l - vX - va);
             vD.style.height = bD.sK.sT(va);
             bD.sK.sU(vD, 8);
+            vF.classList.add("tt-font");
             vF.style.font = bD.sK.u8(0, 0.8 * va);
             vG.style.top = bD.sK.sT(i.k / i.l - vX);
             vG.style.height = bD.sK.sT(vX);
@@ -4528,9 +4547,11 @@
         this.resize = function() {
             var k = bD.sK.tb(0.03, 0.5);
             v7.style.width = (10 * k) + "px";
+            v7.classList.add("tt-font");
             v7.style.font = bD.sK.u8(1, 0.75 * k);
             bD.sK.sU(v7, 4);
             t4.style.top = k + "px";
+            t4.classList.add("tt-font");
             t4.style.font = bD.sK.u8(0, 0.55 * k);
             bD.sK.sU(t4, 2);
             v7.style.height = (k + t4.offsetHeight) + "px";
@@ -4599,6 +4620,7 @@
             var k = bD.sK.tb(0.03, 0.5);
             ty.style.width = (2 * k) + "px";
             ty.style.height = k + "px";
+            ty.classList.add("tt-font");
             ty.style.font = bD.sK.u8(1, 0.75 * k);
             bD.sK.sU(ty, 4);
             bD.sK.sU(ty, 2);
@@ -4683,6 +4705,7 @@
             w0.style.top = self.fi + "px";
             w0.style.width = j + "px";
             w0.style.height = k + "px";
+            w0.classList.add("tt-font");
             w0.style.font = bD.sK.u8(0, 0.3 * k / tq.length);
             bD.sK.sU(w0, 5);
             for (var aC = 1; aC < tq.length; aC++) {
@@ -4758,6 +4781,7 @@
             wN.style.overflow = S[16];
             wN.style.backgroundColor = wI(1);
             wN.style.color = wO(1, 7);
+            wN.classList.add("tt-font");
             wN.style.font = bD.sK.u8(1, 0.05 * iV);
             wN.style.display = S[15];
             wN.style.alignItems = S[11];
@@ -4775,6 +4799,7 @@
             wP.style.padding = bD.sK.sT(0.02 * iV);
             wP.style.backgroundColor = wI(2);
             wP.style.color = wO(2, 8);
+            wP.classList.add("tt-font");
             wP.style.font = bD.sK.u8(0, 0.07 * iV);
             wP.innerHTML = el;
             wP.innerHTML = "<style>a { color: inherit; }</style>" + wP.innerHTML;
@@ -4800,6 +4825,7 @@
             wR.button.style.width = S[1];
             wR.button.style.height = S[1];
             wR.button.style.color = wO(4, 9);
+            wR.button.classList.add("tt-font");
             wR.button.style.font = bD.sK.u8(1, 0.05 * iV);
             wQ.appendChild(wR.button);
             var wS = document.createElement(S[0]);
@@ -4818,6 +4844,7 @@
             wU.button.style.width = S[1];
             wU.button.style.height = S[1];
             wU.button.style.color = wO(6, 10);
+            wU.button.classList.add("tt-font");
             wU.button.style.font = bD.sK.u8(1, 0.035 * iV);
             wT.appendChild(wU.button);
             oi.appendChild(wQ);
@@ -4910,20 +4937,21 @@
         var wh = document.createElement(S[0]);
         this.wi = uL;
         this.wj = wd;
-        // Bosh menyu dizayni (Main Menu v2) uslubini shu oynaga yoqadi.
-        var skinned = false;
-        this.skin = function() {
-            ttSkinStyle();
-            skinned = true;
-            ui.classList.add("tt-skin");
-        }
+        // Bosh menyu dizayni (Main Menu v2): barcha oynalarda yoqilgan.
+        var skinned = true;
+        this.skin = function() {}
         ;
         function dk() {
-            ui.className = "tt-win";
+            ttSkinStyle();
+            ui.className = "tt-win tt-skin";
             wf.className = "tt-win-hd";
             uL.className = "tt-win-bd";
             wg.className = "tt-win-ft";
             wh.className = "tt-win-ftin";
+            if (we === false) {
+                wf.classList.add("tt-skin");
+                wg.classList.add("tt-skin");
+            }
             ui.style.position = S[3];
             ui.style.top = "0";
             ui.style.left = "0";
@@ -4974,7 +5002,9 @@
         }
         this.show = function() {
             if (skinned) {
-                ttIconize(ui);
+                ttIconize(wf);
+                ttIconize(uL);
+                ttIconize(wg);
             }
             if (we !== false) {
                 document.body.appendChild(ui);
@@ -5049,7 +5079,7 @@
         this.wr = function() {
             var wq = this.wn();
             var ej = i.l;
-            ws.fillStyle = bE.pK;
+            ws.fillStyle = "rgba(4,20,31,0.9)";
             ws.fillRect(0, ej * wq.tc, i.j, ej * wq.wp);
         }
         ;
@@ -6414,15 +6444,14 @@
     }
     function a0P(ou, j, k) {
         ou.clearRect(0, 0, j, k);
-        ou.fillStyle = bE.pL;
+        ou.fillStyle = "#020b12";
         ou.fillRect(0, 0, j, k);
     }
+    // Panel chegarasi: bosh menyudagi to'q tugmalar kabi 2px kulrang-ko'k.
     function a0Q(ou, j, k, a0R) {
-        ou.fillStyle = bE.pO;
-        ou.fillRect(0, 0, j, a0R);
-        ou.fillRect(0, 0, a0R, k);
-        ou.fillRect(j - a0R, 0, a0R, k);
-        ou.fillRect(0, k - a0R, j, a0R);
+        ou.strokeStyle = "#2a3f4c";
+        ou.lineWidth = 2;
+        ou.strokeRect(1, 1, j - 2, k - 2);
     }
     function a0S(ou, fg, fi, iV, a0R, h7, a0T) {
         ou.fillStyle = bE.pO;
@@ -8369,15 +8398,27 @@
             var a55 = bD.sK.yf(iV, iV);
             var ib = bD.sK.getContext(a55);
             a56(iV, ib, a54);
+            // Sprite'dagi tashqi doira halqasini kesib tashlaymiz — faqat belgi qoladi.
+            ib.save();
+            ib.beginPath();
+            ib.arc(iV / 2, iV / 2, 0.4 * iV, 0, 2 * Math.PI);
+            ib.clip();
             ib.drawImage(a53, -eI * iV, 0);
+            ib.restore();
             return a55;
         }
         ;
+        // Ikonka tugmasi foni: bosh menyu uslubidagi kvadrat plitka (doira o'rniga).
         function a56(j, ib, a54) {
+            var m = Math.max(1, Math.round(0.05 * j));
+            var sh = Math.max(1, Math.round(0.06 * j));
+            ib.fillStyle = "rgba(0,0,0,0.5)";
+            ib.fillRect(m + sh, m + sh, j - 2 * m - sh, j - 2 * m - sh);
             ib.fillStyle = a54;
-            ib.beginPath();
-            ib.arc(j / 2, j / 2, j * 0.47, 0, 2 * Math.PI);
-            ib.fill();
+            ib.fillRect(m, m, j - 2 * m - sh, j - 2 * m - sh);
+            ib.lineWidth = Math.max(1, Math.round(0.05 * j));
+            ib.strokeStyle = "rgba(255,255,255,0.85)";
+            ib.strokeRect(m + ib.lineWidth / 2, m + ib.lineWidth / 2, j - 2 * m - sh - ib.lineWidth, j - 2 * m - sh - ib.lineWidth);
         }
         this.a57 = function(a58) {
             var iV = a58.height;
@@ -10382,7 +10423,7 @@
             k = Math.floor((a1.a2.ik() ? 0.031 : 0.0249) * i.il);
             k = k < 10 ? 10 : k;
             this.fontSize = Math.floor(2 * k / 3);
-            this.a7u = bD.sK.u8(1, this.fontSize);
+            this.a7u = ttFont("600", this.fontSize);
             a89 = bf.gap;
             a8A = Math.floor(k / 5);
             if (a88.length > 0) {
@@ -10408,9 +10449,13 @@
             bD.sK.textBaseline(ou, 1);
             bD.sK.textAlign(ou, 1);
             ou.clearRect(0, 0, a8B, k);
-            ou.fillStyle = bE.pl;
+            ou.fillStyle = "#1f7a2e";
             ou.fillRect(0, 0, a8B, k);
-            ou.fillStyle = bE.pO;
+            ou.strokeStyle = "#5fd16a";
+            ou.lineWidth = 2;
+            ou.strokeRect(1, 1, a8B - 2, k - 2);
+            ou.fillStyle = "#ffffff";
+            ou.font = ttFont("700", this.fontSize);
             ou.fillText(s1, Math.floor(a8B / 2), Math.floor(k / 2));
         }
         ;
@@ -10540,10 +10585,24 @@
             bD.sK.textBaseline(ou, 1);
             bD.sK.textAlign(ou, 0);
             ou.clearRect(0, 0, j, k);
-            ou.fillStyle = a8O;
+            // Xabar kartasi: to'q fon; rangli xabarlarda yengil rang va chapda urg'u chizig'i.
+            ou.fillStyle = "rgba(5,20,30,0.88)";
             ou.fillRect(0, 0, j, k);
+            if (a8O !== bE.pL && a8O !== bE.pK) {
+                ou.globalAlpha = 0.5;
+                ou.fillStyle = a8O;
+                ou.fillRect(0, 0, j, k);
+                ou.globalAlpha = 1;
+                ou.fillStyle = a8O;
+                ou.fillRect(0, 0, Math.max(3, Math.floor(0.12 * k)), k);
+            }
+            ou.fillStyle = "rgba(255,255,255,0.08)";
+            ou.fillRect(0, k - 1, j, 1);
+            ou.save();
+            ttHardShadow(ou, true, 1);
             ou.fillStyle = a8N;
             ou.fillText(s1, Math.floor(1.5 * a8A), Math.floor(k / 2));
+            ou.restore();
             if (a8c) {
                 ou.imageSmoothingEnabled = true;
                 ak.yq.a1F(a8Q, ou, j - k, 0, k);
@@ -11089,10 +11148,11 @@
             }
         }
         function a9U(ou, j, zA) {
-            ou.fillRect(0, 0, j, 1);
-            ou.fillRect(0, zA - 1, j, 1);
-            ou.fillRect(0, 0, 1, zA);
-            ou.fillRect(j - 1, 0, 1, zA);
+            var fs = ou.fillStyle;
+            ou.strokeStyle = "rgba(2,11,18,0.85)";
+            ou.lineWidth = 2;
+            ou.strokeRect(1, 1, j - 2, zA - 2);
+            ou.fillStyle = fs;
         }
         function a9V(aC, j, uf, a9S) {
             a7C[aC].ou.fillStyle = a9S ? bE.pQ : bE.pM;
@@ -11391,8 +11451,8 @@
             k = Math.floor((a1.a2.ik() ? 0.062 : 0.047) * i.il);
             fontSize[0] = Math.floor(a9x[0] * 0.85 * k);
             fontSize[1] = Math.floor(a9x[1] * 0.85 * k);
-            a7u[0] = bD.sK.u8(1, fontSize[0]);
-            a7u[1] = bD.sK.u8(1, fontSize[1]);
+            a7u[0] = ttFont("600", fontSize[0]);
+            a7u[1] = ttFont("700", fontSize[1]);
             for (aC = a9y.length - 1; aC >= 0; aC--) {
                 a9y[aC] = this.measureText(x7(aC) + S[138], a7u[0]);
             }
@@ -11508,40 +11568,39 @@
             }
             ws.drawImage(canvas, bf.gap, aA9 + 3 * bf.gap + bk.aAA());
         }
+        // Banner ("XARITA: …", "SIZ BOSIB OLDINGIZ", "OʻYIN GʻOLIBI"): bosh menyudagi to'q karta va qattiq soya.
         function aA2() {
-            canvas.width = a88[0].width + a9z;
-            canvas.height = k + a9z;
+            var w = a88[0].width;
+            var sh = Math.max(3, 2 * a9z);
+            canvas.width = w + sh;
+            canvas.height = k + sh;
             ou = canvas.getContext("2d", {
                 alpha: true
             });
-            ou.clearRect(0, 0, a88[0].width + a9z, k + a9z);
-            ou.translate(Math.floor(a9z / 2), Math.floor(a9z / 2));
-            ou.lineWidth = a9z;
-            ou.fillStyle = a88[0].aA7 === 1 ? bE.pT : bE.pL;
-            aAB();
-            ou.fill();
-            ou.strokeStyle = a88[0].aA7 === 1 ? bE.pF : bE.pO;
-            aAB();
-            ou.stroke();
+            ou.clearRect(0, 0, w + sh, k + sh);
+            ou.fillStyle = "rgba(0,0,0,0.45)";
+            ou.fillRect(sh, sh, w, k);
+            ou.fillStyle = "rgba(5,20,30,0.92)";
+            ou.fillRect(0, 0, w, k);
+            ou.lineWidth = 2;
+            ou.strokeStyle = a88[0].aA7 === 1 ? "#5fd16a" : "rgba(255,255,255,0.22)";
+            ou.strokeRect(1, 1, w - 2, k - 2);
             bD.sK.textAlign(ou, 1);
             bD.sK.textBaseline(ou, 1);
-            ou.fillStyle = a88[0].aA7 === 1 ? bE.pF : bE.pO;
+            ou.fillStyle = a88[0].aA7 === 1 ? "#7dffb0" : "#8aa2b0";
             ou.font = a7u[0];
-            ou.fillText(x7(a88[0].aA6), Math.floor(a88[0].width / 2), Math.floor(0.72 * a9x[0] * k));
+            if ("letterSpacing" in ou) {
+                ou.letterSpacing = Math.max(1, Math.floor(0.12 * fontSize[0])) + "px";
+            }
+            ou.fillText(x7(a88[0].aA6), Math.floor(w / 2), Math.floor(0.72 * a9x[0] * k));
+            if ("letterSpacing" in ou) {
+                ou.letterSpacing = "0px";
+            }
+            ttHardShadow(ou, true, Math.max(1, Math.floor(0.06 * fontSize[1])));
+            ou.fillStyle = "#ffffff";
             ou.font = a7u[1];
-            ou.fillText(a88[0].s1, Math.floor(a88[0].width / 2), Math.floor((a9x[0] + 0.48 * a9x[1]) * k));
-        }
-        function aAB() {
-            ou.beginPath();
-            ou.moveTo(aA0, 0);
-            ou.lineTo(a88[0].width - aA0, 0);
-            ou.lineTo(a88[0].width, aA0);
-            ou.lineTo(a88[0].width, k - aA0);
-            ou.lineTo(a88[0].width - aA0, k);
-            ou.lineTo(aA0, k);
-            ou.lineTo(0, k - aA0);
-            ou.lineTo(0, aA0);
-            ou.closePath();
+            ou.fillText(a88[0].s1, Math.floor(w / 2), Math.floor((a9x[0] + 0.48 * a9x[1]) * k));
+            ttHardShadow(ou, false);
         }
     }
     function cu() {
@@ -11610,16 +11669,16 @@
             a0P(ou, j, k);
             var lp = Math.floor(j / 2);
             if (aAC === 1) {
-                ou.fillStyle = bE.pi;
+                ou.fillStyle = "#1f7a2e";
                 ou.fillRect(lp, 0, lp, k);
             } else if (aAC === -1) {
-                ou.fillStyle = bE.py;
+                ou.fillStyle = "#7a2a2a";
                 ou.fillRect(0, 0, lp, k);
             }
             a0Q(ou, j, k, 2);
             var uf = Math.floor(0.25 * k);
             uf = uf < 2 ? 2 : uf;
-            ou.fillStyle = bE.pU;
+            ou.fillStyle = "#5fd16a";
             var a91 = Math.floor((k - 4) * aAD[1] / aAE[1]);
             if (a91 > 0) {
                 ou.fillRect(2, k - 2 - a91, uf, a91);
@@ -11838,6 +11897,7 @@
                 return;
             }
             var fi = a0M();
+            ttBackdrop(i.j - this.j - bf.gap, fi, this.j, k, false);
             ws.drawImage(canvas, i.j - this.j - bf.gap, fi);
         }
         ;
@@ -12186,7 +12246,7 @@
             }
             aAl.resize();
             aAl.fi -= (bn.a7J() - 1) * bf.gap;
-            font = bD.sK.u8(0, 0.3 * aAl.k);
+            font = ttFont("600", 0.3 * aAl.k);
             canvas = document.createElement(S[4]);
             canvas.width = Math.floor(aAl.j);
             canvas.height = Math.floor(aAl.k);
@@ -12319,6 +12379,7 @@
             if (aAn) {
                 aAx();
             }
+            ttBackdrop(Math.floor(aAl.fg), Math.floor(aAl.fi), Math.floor(aAl.j), Math.floor(aAl.k), false);
             ws.drawImage(canvas, Math.floor(aAl.fg), Math.floor(aAl.fi));
         }
         function nH(tt) {
@@ -12330,23 +12391,27 @@
         }
         function aAy() {
             ou.clearRect(0, 0, Math.floor(aAl.j), Math.floor(aAl.k));
-            ou.fillStyle = bE.pK;
+            ou.fillStyle = "#020b12";
             ou.fillRect(0, 0, Math.floor(aAl.j), Math.floor(aAl.k));
             if (aE.ny) {
-                ou.fillStyle = bE.pn;
+                ou.fillStyle = "#1f7a2e";
                 ou.fillRect(0, 0, Math.floor(0.3 * aAl.j), Math.floor(aAl.k));
             }
         }
         function aAz() {
-            ou.fillStyle = bE.pO;
+            ou.fillStyle = "#ffffff";
             ou.fillText("Interfeysni yashirish", 0.15 * aAl.j, 0.5 * aAl.k);
+            ou.fillStyle = "#2a3f4c";
             ou.fillRect(Math.floor(0.3 * aAl.j - 0.5), 0, 2, Math.floor(aAl.k));
+            ou.fillStyle = "#ffffff";
         }
         function aB0() {
             var fg = 0.5 * aAl.j;
             ou.fillText("Replay tezligi", fg, 0.31 * aAl.k);
             ou.fillText(aB4(aAp), fg, 0.69 * aAl.k);
+            ou.fillStyle = "#2a3f4c";
             ou.fillRect(Math.floor(0.7 * aAl.j - 0.5), 0, 2, Math.floor(aAl.k));
+            ou.fillStyle = "#ffffff";
         }
         function aB1() {
             var j = Math.floor(0.46 * aAl.k);
@@ -12369,6 +12434,7 @@
             ou.fillRect(nv + uf + ug, nw, uf, aAe);
         }
         function aB3() {
+            ou.fillStyle = "#2a3f4c";
             ou.fillRect(0, 0, Math.floor(aAl.j), 2);
             ou.fillRect(0, 0, 2, Math.floor(aAl.k));
             ou.fillRect(0, Math.floor(aAl.k) - 2, Math.floor(aAl.j), 2);
@@ -12382,21 +12448,22 @@
             var fg = Math.floor(Math.floor(aAl.fg) + 0.3 * aAl.j - 0.5);
             var fi = Math.floor(Math.floor(aAl.fi) - k);
             var j = Math.floor(0.4 * aAl.j + 2.5);
-            ws.fillStyle = bE.pK;
+            ttBackdrop(fg, fi, j, k, false);
+            ws.fillStyle = "#020b12";
             ws.fillRect(fg, fi, j, k);
-            ws.fillStyle = bE.pn;
+            ws.fillStyle = "#1f7a2e";
             ws.fillRect(fg, fi + aAp * aAe, j, aAe);
-            ws.fillStyle = bE.pO;
+            ws.fillStyle = "#2a3f4c";
             ws.fillRect(fg, fi, 2, k);
             ws.fillRect(fg, fi, j, 2);
             ws.fillRect(fg + j - 2, fi, 2, k);
             for (aC = 1; aC < fZ; aC++) {
                 ws.fillRect(fg, fi + aC * aAe, j, 2);
             }
-            ws.fillStyle = bE.pO;
+            ws.fillStyle = "#ffffff";
             bD.sK.textAlign(ws, 1);
             bD.sK.textBaseline(ws, 1);
-            ws.font = bD.sK.u8(0, 0.6 * aAe);
+            ws.font = ttFont("600", 0.6 * aAe);
             fg = fg + 0.5 * j;
             for (aC = 0; aC < fZ; aC++) {
                 ws.fillText(aB4(aC), fg, fi + (aC + 0.6) * aAe);
@@ -12870,8 +12937,8 @@
             j = Math.floor((a1.a2.ik() ? 0.305 : 0.24) * i.il);
             this.k = Math.floor(0.5 + 0.13 * j);
             j = Math.floor(this.k * 6);
-            a7u = bD.sK.u8(1, Math.floor(0.8 * this.k));
-            aBz = bD.sK.u8(1, Math.floor(0.45 * this.k));
+            a7u = ttFont("700", Math.floor(0.78 * this.k));
+            aBz = ttFont("700", Math.floor(0.45 * this.k));
             aC4 = Math.floor(0.5 * this.k);
             bV.yj.font = a7u;
             fi = bf.gap;
@@ -12909,17 +12976,26 @@
         this.aC5 = function() {
             ou.font = a7u;
             ou.clearRect(0, 0, j, this.k);
-            ou.fillStyle = aC1 ? aC2 : aC3;
+            ou.save();
+            // Balans: to'q karta; o'sishda yashil, kamayishda qizil urg'u (bosh menyu ranglari).
+            ou.fillStyle = "rgba(5,20,30,0.88)";
             ou.fillRect(0, 0, j, this.k);
-            ou.fillStyle = bE.pQ;
+            ou.fillStyle = aC1 ? "rgba(31,122,46,0.45)" : "rgba(122,42,42,0.55)";
+            ou.fillRect(0, 0, j, this.k);
+            ou.fillStyle = aC1 ? "rgba(95,209,106,0.6)" : "rgba(224,96,95,0.6)";
             var ej = this.aC7();
+            ou.fillStyle = aC1 ? "#5fd16a" : "#e0605f";
             this.aC8();
-            ou.fillStyle = ah.hb[aE.fJ] >= af.ka(aE.fJ) ? bE.pv : bE.pO;
+            ou.strokeStyle = aC1 ? "#5fd16a" : "#e0605f";
+            ou.lineWidth = 2;
+            ou.strokeRect(1, 1, j - 2, this.k - 2);
+            ttHardShadow(ou, true, Math.max(1, Math.floor(0.05 * this.k)));
+            ou.fillStyle = ah.hb[aE.fJ] >= af.ka(aE.fJ) ? "#ff9a9a" : "#ffffff";
             var aC9 = bD.tI.a1X(a5k);
             ou.fillText(aC9, Math.floor(j / 2), aC4);
             var uf = ou.measureText(aC9).width;
             ou.font = aBz;
-            ou.fillStyle = ej === 9 ? bE.qV : bE.pO;
+            ou.fillStyle = ej === 9 ? "#f2c14e" : "#7dffb0";
             var aCA = af.aCB;
             var aCC = "+" + aCA;
             var ug = ou.measureText(aCC).width;
@@ -12934,11 +13010,7 @@
                     ou.fillText(aCC, Math.floor(nv + 0.5 * ug), Math.floor(0.3 * this.k));
                 }
             }
-            ou.fillStyle = bE.pO;
-            ou.fillRect(0, 0, j, 1);
-            ou.fillRect(0, 0, 1, this.k);
-            ou.fillRect(0, this.k - 1, j, 1);
-            ou.fillRect(j - 1, 0, 1, this.k);
+            ou.restore();
         }
         ;
         this.aC7 = function() {
@@ -12975,6 +13047,7 @@
             if (ah.nU[aE.fJ] === 0 || aE.hx || ah.a5a[aE.fJ] === 2) {
                 return;
             }
+            ttBackdrop(this.fg, fi, j, this.k, false);
             ws.drawImage(canvas, this.fg, fi);
         }
         ;
@@ -13072,7 +13145,7 @@
             aCO = 0.000 * aCE;
             aCP = Math.floor(0.45 * aCN + aCG);
             aCQ = (aA9 - aCG - 2 * aCN - aCO) / aCI;
-            aCF = bD.sK.u8(1, Math.floor(0.55 * aCG));
+            aCF = ttFont("700", Math.floor(0.55 * aCG));
             aCf = Math.floor((a1.a2.ik() ? 0.67 : 0.72) * aCQ);
             aCH = ttFont("600", aCf);
             aCK.font = aCH;
@@ -13873,13 +13946,17 @@
                 alpha: true
             });
             var nv = Math.floor(1 + k / 40);
+            var sh = Math.max(3, 2 * nv);
             ou.clearRect(0, 0, j, k);
-            ou.fillStyle = bE.pL;
-            ou.fillRect(nv, nv, j - 2 * nv, k - 2 * nv);
-            ou.lineJoin = "bevel";
-            ou.lineWidth = 2 * nv;
-            ou.strokeStyle = bE.pO;
-            ou.strokeRect(nv, nv, j - 2 * nv, k - 2 * nv);
+            // Bildirishnoma kartasi: bosh menyu uslubi (to'q fon, qattiq soya, ingichka chegara)
+            ou.fillStyle = "rgba(0,0,0,0.45)";
+            ou.fillRect(nv + sh, nv + sh, j - 2 * nv - sh, k - 2 * nv - sh);
+            ou.fillStyle = "rgba(5,20,30,0.92)";
+            ou.fillRect(nv, nv, j - 2 * nv - sh, k - 2 * nv - sh);
+            ou.lineJoin = "miter";
+            ou.lineWidth = 2;
+            ou.strokeStyle = "rgba(255,255,255,0.22)";
+            ou.strokeRect(nv + 1, nv + 1, j - 2 * nv - sh - 2, k - 2 * nv - sh - 2);
             ou.imageSmoothingEnabled = false;
             var ej = ac.get(aDf);
             var aDn = ej.width;
@@ -14494,12 +14571,12 @@
             aEl = Math.floor(0.5 * vV);
             aEm = Math.floor(2.5 * aEl);
             k = vV + aEk + 3 * aEl;
-            var a7u = bD.sK.u8(1, aEk / i.l);
+            var a7u = ttFont("700", aEk / i.l);
             aEo = Math.floor(i.l * aR.measureText(a5X, a7u));
             j = (aEo > aEn ? aEo : aEn) + 2 * aEm;
             var aEr = j;
             j = Math.min(j, i.j - 2 * (a1.a2.ik() ? 2 : 1) * bf.gap);
-            a7u = bD.sK.u8(1, (j / aEr) * aEk / i.l);
+            a7u = ttFont("700", (j / aEr) * aEk / i.l);
             aEo = Math.floor(i.l * aR.measureText(a5X, a7u));
             fg = Math.floor((i.j - j) / 2);
             fi = Math.floor((i.k - k) / 2);
@@ -14512,16 +14589,18 @@
             if (!this.iL) {
                 return;
             }
-            ws.fillStyle = bE.pL;
+            ttBackdrop(fg, fi, j, k, true);
+            ws.fillStyle = "rgba(5,20,30,0.92)";
             ws.fillRect(fg, fi + vV, j, k - vV);
-            ws.fillStyle = bE.qX;
+            ws.fillStyle = "#4a1a1d";
             ws.fillRect(fg, fi, j, vV);
-            ws.fillStyle = bE.pO;
-            ws.lineWidth = bf.a1E;
-            ws.strokeStyle = bE.pO;
-            ws.strokeRect(fg, fi, j, k);
-            ws.fillRect(fg, fi + vV, j, bf.a1E);
-            ws.font = bD.sK.u8(1, 0.48 * vV);
+            ws.lineWidth = 2;
+            ws.strokeStyle = "#e0605f";
+            ws.strokeRect(fg + 1, fi + 1, j - 2, k - 2);
+            ws.fillStyle = "#e0605f";
+            ws.fillRect(fg, fi + vV - 1, j, 2);
+            ws.fillStyle = "#ffffff";
+            ws.font = ttFont("700", 0.48 * vV);
             bD.sK.textAlign(ws, 1);
             bD.sK.textBaseline(ws, 1);
             ws.fillText(L(133), Math.floor(fg + (j - 0.5 * vV) / 2), Math.floor(fi + 0.55 * vV));
@@ -16267,7 +16346,7 @@
             aIB = a9M * 3;
             aIA = Math.floor(0.225 * aI8);
             aIE = Math.floor(0.3 * a9M);
-            a9L = bD.sK.u8(0, aIE);
+            a9L = ttFont("700", aIE);
         }
         ;
         function aIM(aIN) {
@@ -16355,27 +16434,24 @@
         }
         ;
         function aIV(fg, fi, j, k, aG2) {
-            ws.fillStyle = bE.pJ;
-            ws.fillRect(fg, fi, j, k);
-            ws.lineWidth = 3;
-            ws.strokeStyle = bE.pO;
-            ws.strokeRect(fg, fi, j, k);
+            ttBackdrop(fg, fi, j, k, false);
+            ttButton(ws, fg, fi, j, k, false);
             var fZ = Math.floor(0.3 * k);
             bD.sK.textAlign(ws, 1);
             bD.sK.textBaseline(ws, 1);
-            ws.font = bD.sK.u8(0, fZ);
-            ws.fillStyle = bE.pO;
+            ws.font = ttFont("700", fZ);
+            ws.fillStyle = "#ffffff";
             ws.fillText(aG2, Math.floor(fg + j / 2), Math.floor(fi + k / 2 + 0.1 * fZ));
         }
         function aIU(title, fi, aBS, vP) {
-            ws.fillStyle = aID;
-            aIW(fi, aBS, 1);
+            ws.fillStyle = "#020b12";
+            aIW(fi, 2, 1);
             ws.fill();
-            ws.fillStyle = aIC;
-            aIW(fi, aBS, vP);
+            ws.fillStyle = "#1f7a2e";
+            aIW(fi, 2, vP);
             ws.fill();
-            ws.strokeStyle = bE.pO;
-            aIW(fi, aBS, 1);
+            ws.strokeStyle = "#5fd16a";
+            aIW(fi, 2, 1);
             ws.stroke();
             aIX(title, fi);
         }
@@ -16386,16 +16462,13 @@
             ws.fillStyle = bE.pO;
             ws.fillText(aIY, Math.floor(0.5 * i.j), Math.floor(fi + 0.58 * a9M));
         }
+        // Progress chizig'i: bosh menyu uslubidagi to'g'ri burchakli trek.
         function aIW(fi, aBS, vP) {
-            var nv = Math.floor((i.j - aI8) / 2) + aIB;
-            var o8 = nv + Math.floor(vP * (aI8 - 2 * aIB));
+            var nv = Math.floor((i.j - aI8) / 2);
+            var o8 = nv + Math.floor(vP * aI8);
             ws.lineWidth = aBS;
             ws.beginPath();
-            ws.moveTo(nv, fi);
-            ws.lineTo(o8, fi);
-            ws.lineTo(Math.floor(nv - aIB + vP * aI8), fi + a9M);
-            ws.lineTo(nv - aIB, fi + a9M);
-            ws.closePath();
+            ws.rect(nv + 1, fi + 1, Math.max(0, o8 - nv - 2), a9M - 2);
         }
     }
     function cV() {
@@ -22050,6 +22123,12 @@
         chart: '<path d="M4 20V11M10 20V5M16 20v-6M2 20h20"></path>',
         flag: '<path d="M5 21V4h12l-2 4 2 4H5"></path>',
         shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"></path><path d="m9 12 2 2 4-4"></path>',
+        select: '<path d="M4 4h4M12 4h4M20 4v4M20 12v4M20 20h-4M12 20H8M4 20v-4M4 12V8"></path><path d="m8 12 3 3 5-6"></path>',
+        news: '<rect x="3" y="5" width="15" height="14"></rect><path d="M18 9h3v8a2 2 0 0 1-2 2M7 9h7M7 13h7M7 16h4"></path>',
+        link: '<path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1"></path><path d="M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"></path>',
+        coin: '<rect x="3" y="9" width="18" height="10"></rect><path d="M6 9V6h12v3M12 12v4"></path>',
+        lock: '<rect x="5" y="11" width="14" height="10"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path>',
+        close: '<path d="M5 5l14 14M19 5 5 19"></path>',
         trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0z"></path><path d="M7 6H3v2a4 4 0 0 0 4 4M17 6h4v2a4 4 0 0 1-4 4M12 14v4M8 21h8M9 18h6"></path>'
     };
     function ttIcon(name) {
@@ -22074,7 +22153,30 @@
         "📜": "list",
         "📊": "chart",
         "🏳": "flag",
-        "🕊": "shield"
+        "🕊": "shield",
+        "🔄": "refresh",
+        "➡": "enter",
+        "🔲": "select",
+        "📋": "copy",
+        "🛠": "settings",
+        "📰": "news",
+        "🔑": "key",
+        "🔗": "link",
+        "📈": "chart",
+        "🧈": "coin",
+        "🔒": "lock",
+        "✅": "check",
+        "❌": "close",
+        "🚩": "flag",
+        "💬": "chat",
+        "🔎": "search",
+        "🏆": "trophy",
+        "🗡": "swords",
+        "🏠": "home",
+        "📥": "enter",
+        "🚫": "close",
+        "🔙": "back",
+        "⚠": "alert"
     };
     function ttIconize(root) {
         var nodes = root.querySelectorAll("h1, .tt-btn");
@@ -22083,7 +22185,7 @@
             if (e.querySelector(".tt-ic")) {
                 continue;
             }
-            var m = /^\s*([ℹ☰⚔⚙⬅▶]|\uD83D[\uDD27\uDDD1\uDCDC\uDCCA\uDD4A]|🏳)️?\s*/.exec(e.innerHTML);
+            var m = /^\s*(\u2630|\p{Extended_Pictographic})\uFE0F?\s*/u.exec(e.innerHTML);
             if (!m || !TT_EMOJI_ICON[m[1]]) {
                 continue;
             }
@@ -22259,16 +22361,17 @@
         st.id = "tt-skin-style";
         st.textContent = [
             ".tt-skin,.tt-skin *{font-family:var(--font-chakra),'Chakra Petch',system-ui,sans-serif!important}",
+            ".tt-font{font-family:var(--font-chakra),'Chakra Petch',system-ui,sans-serif!important}",
             ".tt-skin{color:#eef3f5}",
             ".tt-skin .tt-win-bd{background:rgba(4,20,31,0.88)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}",
             ".tt-skin .tt-win-bd::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,0.14) 0px,rgba(0,0,0,0.14) 1px,transparent 1px,transparent 3px);opacity:0.5;pointer-events:none}",
-            ".tt-skin .tt-win-hd{background:rgba(2,11,18,0.92)!important;border-bottom:2px solid rgba(255,255,255,0.14)!important;justify-content:center;align-items:center}",
-            ".tt-skin .tt-win-hd h1,.tt-skin .tt-win-hd h1 *{font-family:var(--font-silkscreen),'Silkscreen',monospace!important}",
-            ".tt-skin .tt-win-hd h1{font-size:clamp(16px,min(4.6vw,6vh),40px)!important;font-weight:700;letter-spacing:0.02em;color:#fff;text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:94vw}",
-            ".tt-skin .tt-win-ft{background:rgba(2,11,18,0.92)!important;border-top:2px solid rgba(255,255,255,0.14)!important}",
+            ":is(.tt-skin .tt-win-hd,.tt-win-hd.tt-skin){background:rgba(2,11,18,0.92)!important;border-bottom:2px solid rgba(255,255,255,0.14)!important;justify-content:center;align-items:center}",
+            ":is(.tt-skin .tt-win-hd,.tt-win-hd.tt-skin) h1,:is(.tt-skin .tt-win-hd,.tt-win-hd.tt-skin) h1 *{font-family:var(--font-silkscreen),'Silkscreen',monospace!important}",
+            ":is(.tt-skin .tt-win-hd,.tt-win-hd.tt-skin) h1{font-size:clamp(16px,min(4.6vw,6vh),40px)!important;font-weight:700;letter-spacing:0.02em;color:#fff;text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000;white-space:normal;line-height:1.15;text-align:center;overflow-wrap:anywhere;max-width:94vw}",
+            ":is(.tt-skin .tt-win-ft,.tt-win-ft.tt-skin){background:rgba(2,11,18,0.92)!important;border-top:2px solid rgba(255,255,255,0.14)!important}",
             ".tt-skin .tt-win-ftin{display:flex;gap:12px;padding:10px 16px;box-sizing:border-box;max-width:820px;margin:0 auto}",
-            ".tt-skin .tt-win-ft .tt-btn{flex:1 1 0;width:auto!important;border:2px solid #2a3f4c!important;background:#020b12!important;color:#fff!important;font-weight:700!important;box-shadow:4px 4px 0 #000;cursor:pointer;transition:transform .12s,box-shadow .12s}",
-            ".tt-skin .tt-win-ft .tt-btn:last-child:not(:first-child){background:#1f7a2e!important;border-color:#5fd16a!important}",
+            ":is(.tt-skin .tt-win-ft,.tt-win-ft.tt-skin) .tt-btn{flex:1 1 0;width:auto!important;border:2px solid #2a3f4c!important;background:#020b12!important;color:#fff!important;font-weight:700!important;box-shadow:4px 4px 0 #000;cursor:pointer;transition:transform .12s,box-shadow .12s}",
+            ":is(.tt-skin .tt-win-ft,.tt-win-ft.tt-skin) .tt-btn:last-child:not(:first-child){background:#1f7a2e!important;border-color:#5fd16a!important}",
             ".tt-skin .tt-sec{background:rgba(5,20,30,0.8)!important;border:2px solid rgba(255,255,255,0.14)!important;box-shadow:6px 6px 0 rgba(0,0,0,0.45);box-sizing:border-box}",
             ".tt-skin .tt-sec-h{font-size:12px!important;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#8aa2b0}",
             ".tt-skin .tt-sec>div:not(.tt-row){color:#eef3f5}",
@@ -22278,14 +22381,18 @@
             ".tt-skin .tt-grid{padding:16px!important;gap:12px!important;max-width:980px;margin:0 auto}",
             ".tt-skin .tt-grid .tt-btn{font-size:17px!important;font-weight:700!important;box-shadow:4px 4px 0 #000}",
             ".tt-skin .tt-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}",
-            "@media (hover:hover){.tt-skin .tt-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #000;border-color:#4d6676!important}.tt-skin .tt-win-ft .tt-btn:last-child:not(:first-child):hover{background:#258a35!important;border-color:#5fd16a!important}.tt-skin .tt-opt:hover{background:rgba(255,255,255,0.06)}}",
+            "@media (hover:hover){.tt-skin .tt-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #000;border-color:#4d6676!important}:is(.tt-skin .tt-win-ft,.tt-win-ft.tt-skin) .tt-btn:last-child:not(:first-child):hover{background:#258a35!important;border-color:#5fd16a!important}.tt-skin .tt-opt:hover{background:rgba(255,255,255,0.06)}}",
             ".tt-skin .tt-opt{display:flex;align-items:center;gap:10px;padding:6px;margin:0 -6px!important}",
             ".tt-skin .tt-opt-e{display:none}",
+            ".tt-skin .tt-chk{display:flex;align-items:center;gap:10px;padding:6px;margin:0 -6px!important}",
+            ".tt-skin .tt-chk::before{content:'';width:16px;height:16px;flex:none;border:2px solid #4d6676;background:#020b12 center/12px no-repeat;box-sizing:border-box}",
+            ".tt-skin .tt-chk[aria-checked=true]::before{border-color:#5fd16a;background-color:#1f7a2e;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='m4 12 5 5L20 6'/%3E%3C/svg%3E\")}",
+            "@media (hover:hover){.tt-skin .tt-chk:hover{background:rgba(255,255,255,0.06)}}",
             ".tt-skin .tt-opt::before{content:'';width:14px;height:14px;flex:none;border:2px solid #4d6676;background:#020b12;box-sizing:border-box}",
             ".tt-skin .tt-opt[aria-checked=true]::before{background:#5fd16a;border-color:#5fd16a;box-shadow:inset 0 0 0 2px #020b12}",
             ".tt-skin .tt-input{background:#020b12!important;border:2px solid #2a3f4c!important;color:#fff!important;font-weight:600!important;padding:6px 10px!important;box-sizing:border-box}",
             ".tt-skin .tt-input:focus{border-color:#5fd16a!important}",
-            ".tt-skin .tt-win-hd h1 .tt-ic{filter:drop-shadow(3px 3px 0 #000)}",
+            ":is(.tt-skin .tt-win-hd,.tt-win-hd.tt-skin) h1 .tt-ic{filter:drop-shadow(3px 3px 0 #000)}",
             ".tt-skin canvas{border:2px solid #2a3f4c;box-sizing:border-box;image-rendering:auto}"
         ].join("");
         document.head.appendChild(st);
@@ -22796,6 +22903,7 @@
             if (root) {
                 return;
             }
+            ttSkinStyle();
             build();
             if (!map) {
                 buildMap();
@@ -24698,14 +24806,16 @@
             var eH = aSf(0);
             var uw = aSf(1);
             var ft = aSf(2);
+            ttBackdrop(aSa.fg, aSa.fi, aRn, aSa.k, false);
             ws.fillStyle = S[10] + eH + "," + uw + "," + ft + ")";
             ws.fillRect(aSa.fg, aSa.fi, aRn, aSa.k);
-            ws.strokeStyle = bE.pO;
-            ws.strokeRect(aSa.fg, aSa.fi, aRn, aSa.k);
+            ws.lineWidth = 2;
+            ws.strokeStyle = "#ffffff";
+            ws.strokeRect(aSa.fg + 1, aSa.fi + 1, aRn - 2, aSa.k - 2);
             ws.fillStyle = (eH + uw + ft < 0.4 * (3 * 255) && uw < 150) ? bE.pO : bE.pF;
             bD.sK.textBaseline(ws, 1);
             bD.sK.textAlign(ws, 1);
-            ws.font = bD.sK.u8(0, 0.1 * aSa.k);
+            ws.font = ttFont("700", 0.1 * aSa.k);
             ws.rotate(-Math.PI / 2);
             ws.fillText(L(319), -aSa.fi - 0.5 * aSa.k, aSa.fg + 0.5 * aRn);
             ws.setTransform(1, 0, 0, 1, 0, 0);
@@ -24715,12 +24825,16 @@
             var uw = aC === 1 ? 130 : aC === 2 ? 30 : 0;
             var ft = aC === 2 ? 220 : 0;
             var aSi = aSa.fi + aC * (bf.gap + aSd);
+            ttBackdrop(aSb, aSi, aSc, aSd, false);
+            ws.fillStyle = "#020b12";
+            ws.fillRect(aSb, aSi, aSc, aSd);
             ws.fillStyle = S[10] + eH + "," + uw + "," + ft + ")";
             ws.fillRect(aSb, aSi, colors[aC] * aSc, aSd);
-            ws.strokeStyle = bE.pO;
-            ws.strokeRect(aSb, aSi, aSc, aSd);
-            ws.fillStyle = bE.pO;
-            ws.font = bD.sK.u8(0, 0.32 * aSd);
+            ws.lineWidth = 2;
+            ws.strokeStyle = "#2a3f4c";
+            ws.strokeRect(aSb + 1, aSi + 1, aSc - 2, aSd - 2);
+            ws.fillStyle = "#ffffff";
+            ws.font = ttFont("700", 0.32 * aSd);
             bD.sK.textBaseline(ws, 1);
             bD.sK.textAlign(ws, 0);
             ws.fillText((aC === 0 ? L(320) : aC === 1 ? L(321) : L(322)) + aSf(aC), aSb + bf.gap, aSi + 0.53 * aSd);
@@ -29692,7 +29806,7 @@
         }
         function aXP(ej) {
             var fontSize = ej / 3;
-            ou.font = bD.sK.u8(1, fontSize);
+            ou.font = ttFont("700", fontSize);
             ou.fillStyle = bE.pO;
             ou.fillText(S[1], ej, ej + 0.1 * fontSize);
         }
@@ -29706,7 +29820,7 @@
             aXV = (aXM + aXN) / 2;
             el = Math.floor(100 * g1 + 0.5) + "%";
             eH *= 0.525 - Math.max(0.6 * (g1 - 0.7), 0);
-            ou.font = bD.sK.u8(1, fontSize);
+            ou.font = ttFont("700", fontSize);
             ou.fillStyle = bE.pO;
             ou.fillText(el, ej + Math.cos(aXV) * eH, ej + Math.cos(aXV + 1.5 * Math.PI) * eH);
         }
@@ -32963,9 +33077,9 @@
         ;
         this.ad0 = function() {
             if (this.eI < 2) {
-                this.acq = aR.measureText(bD.tI.a1X(bg.max[this.eI]), bD.sK.u8(0, this.acv));
+                this.acq = aR.measureText(bD.tI.a1X(bg.max[this.eI]), ttFont("600", this.acv));
             } else if (this.eI === 2) {
-                this.acq = aR.measureText(bD.tI.a6I(6, 2), bD.sK.u8(0, this.acv));
+                this.acq = aR.measureText(bD.tI.a6I(6, 2), ttFont("600", this.acv));
             }
             this.acr = this.j - 2 * this.uf - this.acq - this.ug;
         }
@@ -32987,14 +33101,18 @@
         this.aAw = function() {
             var fg = bO.g0(i.j - this.j, 2);
             var fi = bO.g0(i.k - this.k, 2);
+            ttBackdrop(fg, fi, this.j, this.k, true);
             ws.setTransform(1, 0, 0, 1, fg, fi);
-            ws.fillStyle = bE.pL;
+            ws.fillStyle = "rgba(5,20,30,0.9)";
             ws.fillRect(0, this.acu, this.j, this.k - this.acu);
             this.ad1();
             this.aTd();
-            ws.strokeRect(0, 0, this.j, this.k);
+            ws.lineWidth = 2;
+            ws.strokeStyle = "rgba(255,255,255,0.18)";
+            ws.strokeRect(1, 1, this.j - 2, this.k - 2);
+            ws.fillStyle = "#b9c8d0";
             bD.sK.textAlign(ws, 2);
-            ws.font = bD.sK.u8(0, this.acv);
+            ws.font = ttFont("600", this.acv);
             if (this.eI === 0) {
                 this.ad2(bg.aci, fg, fi);
             } else if (this.eI === 1) {
@@ -33015,27 +33133,37 @@
             bD.sK.textBaseline(ws, 1);
             bD.sK.textAlign(ws, 1);
             ws.strokeStyle = bE.pO;
-            ws.font = bD.sK.u8(1, this.acw);
+            ws.font = ttFont("700", this.acw);
             ea = this.j / this.aDB.length;
-            ws.fillStyle = bE.pk;
+            // Tablar: to'q fon, tanlangani yashil (bosh menyu kabi)
+            ws.fillStyle = "#020b12";
+            ws.fillRect(0, this.k - this.vN, this.j, this.vN);
+            ws.fillStyle = "#1f7a2e";
             ws.fillRect(this.eI * ea, this.k - this.vN, ea, this.vN);
-            ws.fillStyle = bE.pO;
-            ws.fillRect(0, this.k - this.vN - 0.5 * this.a9z, this.j, this.a9z);
+            ws.fillStyle = "#5fd16a";
+            ws.fillRect(this.eI * ea, this.k - this.vN, ea, 2);
+            ws.fillStyle = "#2a3f4c";
+            ws.fillRect(0, this.k - this.vN - 1, this.j, 2);
             for (aC = 1; aC <= 3; aC++) {
-                ws.fillRect(aC * ea, this.k - this.vN, this.a9z, this.vN);
+                ws.fillRect(aC * ea - 1, this.k - this.vN, 2, this.vN);
             }
+            ws.fillStyle = "#ffffff";
             for (aC = this.aDB.length - 1; aC >= 0; aC--) {
                 ws.fillText(bD.ou.a5J(this.aDB[aC], 0, 0.9 * ea), (aC + 0.5) * ea, this.k - 0.46 * this.vN);
             }
         }
         ;
         this.aTd = function() {
-            ws.fillStyle = bE.qA;
+            ws.fillStyle = "rgba(2,11,18,0.96)";
             ws.fillRect(0, 0, this.j, this.acu);
-            ws.fillStyle = bE.pO;
-            ws.fillRect(0, this.acu - 0.5 * this.a9z, this.j, this.a9z);
-            ws.font = bD.sK.u8(1, 0.39 * this.acu);
+            ws.fillStyle = "rgba(255,255,255,0.16)";
+            ws.fillRect(0, this.acu - 1, this.j, 2);
+            ws.font = ttFont("700", 0.34 * this.acu, true);
+            ws.save();
+            ttHardShadow(ws, true, 2);
+            ws.fillStyle = "#ffffff";
             ws.fillText(bD.ou.a5J(L(534), 0, 0.8 * this.j), Math.floor(this.j / 2), Math.floor(0.55 * this.acu));
+            ws.restore();
         }
         ;
         this.ad2 = function(h, fg, fi) {
