@@ -39,6 +39,8 @@ export async function migrate() {
             PRIMARY KEY (room_code, player_id)
         );
         ALTER TABLE room_players ADD COLUMN IF NOT EXISTS color_code INTEGER NOT NULL DEFAULT 0;
+        ALTER TABLE rooms ADD COLUMN IF NOT EXISTS game_mode SMALLINT NOT NULL DEFAULT 0 CHECK (game_mode IN (0, 1));
+        ALTER TABLE rooms ADD COLUMN IF NOT EXISTS team_count SMALLINT NOT NULL DEFAULT 2 CHECK (team_count BETWEEN 2 AND 4);
     `);
 }
 
@@ -80,6 +82,8 @@ async function readRoom(client, code) {
         mapName: room.map_name,
         maxPlayers: room.max_players,
         botCount: room.bot_count,
+        gameMode: room.game_mode,
+        teamCount: room.team_count,
         seed: room.seed,
         createdAt: room.created_at.getTime(),
         players: p.rows.map((row) => ({ id: row.player_id, name: row.name, color: row.color, colorCode: row.color_code, host: row.is_host }))
@@ -111,9 +115,9 @@ export async function createRoom(player, opts) {
         try {
             return await tx(async (c) => {
                 await c.query(
-                    `INSERT INTO rooms (code, host_id, map_index, map_name, max_players, bot_count, seed)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                    [code, player.id, opts.mapIndex, opts.mapName, opts.maxPlayers, opts.botCount, Math.floor(Math.random() * 65536)]
+                    `INSERT INTO rooms (code, host_id, map_index, map_name, max_players, bot_count, game_mode, team_count, seed)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                    [code, player.id, opts.mapIndex, opts.mapName, opts.maxPlayers, opts.botCount, opts.gameMode, opts.teamCount, Math.floor(Math.random() * 65536)]
                 );
                 await c.query(
                     `INSERT INTO room_players (room_code, player_id, name, color, color_code, is_host) VALUES ($1, $2, $3, $4, $5, true)`,

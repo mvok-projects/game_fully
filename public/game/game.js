@@ -891,7 +891,7 @@
         return ae.hc(gU, gQ);
     }
     function hU() {
-        return bO.g0(gV * ah.hb[gU], 1 + bO.g0(10 * ah.hN[gU], 16));
+        return TTPoints.defense(gU, bO.g0(gV * ah.hb[gU], 1 + bO.g0(10 * ah.hN[gU], 16)), gX, gV);
     }
     function hQ() {
         var hd = gV * aE.gt;
@@ -6409,15 +6409,32 @@
         }
     }
     function a0J() {
-        au.a0K();
+        var ttMap = TTMap.on;
+        if (ttMap) {
+            TTMap.background(ws);
+        } else {
+            au.a0K();
+        }
         ws.setTransform(im, 0, 0, im, 0, 0);
-        ws.imageSmoothingEnabled = im < 3;
-        ws.drawImage(bV.yn, aT.a0L(), aT.a0M());
-        bS.a0N.wr();
+        // Yangi dizaynda piksellar aniq chiziladi (faqat juda uzoqlashtirilganda silliqlanadi).
+        ws.imageSmoothingEnabled = ttMap ? im < 1 : im < 3;
+        ws.drawImage(ttMap ? TTMap.image() : bV.yn, aT.a0L(), aT.a0M());
+        if (!ttMap) {
+            bS.a0N.wr();
+        }
         ws.drawImage(a0O, aT.a0L(), aT.a0M());
-        au.wr();
+        if (!ttMap) {
+            au.wr();
+        }
         bQ.wr();
+        TTPoints.draw(ws);
+        if (ttMap) {
+            TTMap.marker(ws);
+        }
         ag.wr();
+        if (ttMap) {
+            TTMap.vignette(ws);
+        }
         if (aE.ny) {
             bk.wr();
             bF.wr();
@@ -9348,6 +9365,8 @@
         this.a6k = 0;
         this.a6l = "";
         this.a6m = function() {
+            TTPoints.stop();
+            TTMap.stop();
             bX.turnstile.close();
             bR.dk();
             bU.dk();
@@ -13188,7 +13207,7 @@
             }
         }
         function lbPlayerColor(player) {
-            if (aE.iT) {
+            if (aE.iT && bj.aCr[player] !== 0) {
                 return bj.aCq[bj.aCr[player]];
             }
             if (!ad.aJA || ad.aJA[player] === undefined) {
@@ -16900,6 +16919,9 @@
             }
             if (aE.iT) {
                 aJO();
+                if (TTRoomTeams) {
+                    aJQ(aE.ku, aE.fW);
+                }
             } else {
                 if (aE.data.colorsType === 0) {
                     if (aE.data.selectableColor) {
@@ -18311,6 +18333,7 @@
         ;
         function aLY() {
             af.aCB = 0;
+            TTPoints.tick();
             aLd();
             aLe();
             if (bi.kr() % 100 !== 99) {
@@ -18324,7 +18347,7 @@
             var hb = ah.hb;
             for (var aC = am.lQ - 1; aC >= 0; aC--) {
                 var h7 = lV[aC];
-                var aLh = bO.g0(af.aDb(h7) * hb[h7], 10000);
+                var aLh = bO.g0(af.aDb(h7) * hb[h7] * TTPoints.income(h7), 1000000);
                 bD.gv.gy(h7, Math.max(aLh, 1));
             }
             aLi(9);
@@ -18345,7 +18368,7 @@
             var lV = am.lV;
             for (var aC = am.lQ - 1; aC >= 0; aC--) {
                 var h7 = lV[aC];
-                bD.gv.gy(h7, bO.g0(o7 * hN[h7], 32));
+                bD.gv.gy(h7, bO.g0(o7 * hN[h7] * TTPoints.income(h7), 3200));
             }
         }
         function aLk() {
@@ -18354,7 +18377,7 @@
             var o7 = aE.data.tIncomeData;
             for (var aC = am.lQ - 1; aC >= 0; aC--) {
                 var h7 = lV[aC];
-                bD.gv.gy(h7, bO.g0(o7[h7] * hN[h7], 32));
+                bD.gv.gy(h7, bO.g0(o7[h7] * hN[h7] * TTPoints.income(h7), 3200));
             }
         }
         function aLe() {
@@ -20897,6 +20920,461 @@
         }
         ;
     }
+    // ---- Xarita ko'rinishi bosh menyu dizaynida (hozircha faqat "Maxsus ssenariy" rejimida) ----
+    // Dvigatel quruqlik/suvni bV.yn rangidan aniqlaydi, shuning uchun u o'zgartirilmaydi:
+    // ekranga chiqarish uchun alohida qayta bo'yalgan nusxa (canvas) yasaladi.
+    // Xona jamoa o'yini boshlanayotganda true: bj.dk() jamoalarni roomTeams() bilan taqsimlaydi.
+    var TTRoomTeams = false;
+    var TTMap = (function() {
+        var canvas = null;
+        var vig = null, vigW = 0, vigH = 0;
+        var BG = "#03121e";
+        function hx(h) {
+            return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+        }
+        var DEEP = hx("#03121e"), MID = hx("#082e46"), SEA = hx("#0a3a56"), SHALLOW = hx("#1a6884");
+        var COAST = hx("#1c241f"), SAND = hx("#7d7564");
+        var GRASS_LO = hx("#1a5a22"), GRASS_HI = hx("#3a8634");
+        var HILL_LO = hx("#4e6a3a"), HILL_HI = hx("#8a8670"), PEAK = hx("#c4bfb0");
+        function mix(a, b, t) {
+            t = t < 0 ? 0 : t > 1 ? 1 : t;
+            return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+        }
+        // Ikki o'tishli chamfer masofa: src[i] = 1 bo'lgan piksellargacha (3 = 1 qadam).
+        function distance(src, W, H) {
+            var d = new Uint16Array(W * H);
+            var INF = 65535, x, y, i, v;
+            for (i = 0; i < W * H; i++) {
+                d[i] = src[i] ? 0 : INF;
+            }
+            for (y = 0; y < H; y++) {
+                for (x = 0; x < W; x++) {
+                    i = y * W + x;
+                    v = d[i];
+                    if (!v) {
+                        continue;
+                    }
+                    if (x > 0) v = Math.min(v, d[i - 1] + 3);
+                    if (y > 0) {
+                        v = Math.min(v, d[i - W] + 3);
+                        if (x > 0) v = Math.min(v, d[i - W - 1] + 4);
+                        if (x < W - 1) v = Math.min(v, d[i - W + 1] + 4);
+                    }
+                    d[i] = v;
+                }
+            }
+            for (y = H - 1; y >= 0; y--) {
+                for (x = W - 1; x >= 0; x--) {
+                    i = y * W + x;
+                    v = d[i];
+                    if (!v) {
+                        continue;
+                    }
+                    if (x < W - 1) v = Math.min(v, d[i + 1] + 3);
+                    if (y < H - 1) {
+                        v = Math.min(v, d[i + W] + 3);
+                        if (x < W - 1) v = Math.min(v, d[i + W + 1] + 4);
+                        if (x > 0) v = Math.min(v, d[i + W - 1] + 4);
+                    }
+                    d[i] = v;
+                }
+            }
+            return d;
+        }
+        function hash(x, y) {
+            var h = (x * 374761393 + y * 668265263) | 0;
+            h = (h ^ (h >>> 13)) * 1274126177;
+            return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+        }
+        function build() {
+            var W = bV.fk, H = bV.fl, n = W * H;
+            var src = bV.yo;
+            // 0 suv, 1 quruqlik, 2 tog'
+            var kind = new Uint8Array(n);
+            var lum = new Float32Array(n);
+            var i, x, y;
+            for (i = 0; i < n; i++) {
+                var fD = i * 4;
+                kind[i] = ad.fe(fD) ? 2 : ad.fU(fD) ? 1 : 0;
+                lum[i] = (0.299 * src[fD] + 0.587 * src[fD + 1] + 0.114 * src[fD + 2]) / 255;
+            }
+            var isLand = new Uint8Array(n), isWater = new Uint8Array(n);
+            for (i = 0; i < n; i++) {
+                isLand[i] = kind[i] !== 0;
+                isWater[i] = kind[i] === 0;
+            }
+            var toLand = distance(isLand, W, H);
+            var toWater = distance(isWater, W, H);
+            canvas = document.createElement("canvas");
+            canvas.width = W;
+            canvas.height = H;
+            var ctx = canvas.getContext("2d", {
+                alpha: false
+            });
+            var img = ctx.createImageData(W, H);
+            var out = img.data;
+            for (y = 0; y < H; y++) {
+                for (x = 0; x < W; x++) {
+                    i = y * W + x;
+                    var c, k = kind[i];
+                    if (k === 0) {
+                        var dl = toLand[i] / 3;
+                        if (dl <= 1) {
+                            c = COAST;
+                        } else if (dl <= 5) {
+                            c = mix(SHALLOW, SEA, (dl - 1) / 4);
+                        } else {
+                            c = mix(SEA, dl < 16 ? MID : DEEP, dl < 16 ? (dl - 5) / 11 : Math.min(1, (dl - 16) / 24));
+                        }
+                        // Xarita chetida suv fon rangiga qo'shilib ketadi (to'rtburchak chegara ko'rinmasin).
+                        var edge = Math.min(x, y, W - 1 - x, H - 1 - y);
+                        if (edge < 24) {
+                            c = mix(DEEP, c, edge / 24);
+                        }
+                    } else {
+                        var dw = toWater[i] / 3;
+                        if (k === 2) {
+                            c = lum[i] > 0.8 ? PEAK : mix(HILL_LO, HILL_HI, (lum[i] - 0.25) / 0.5);
+                        } else if (dw <= 1.5) {
+                            c = SAND;
+                        } else {
+                            c = mix(GRASS_LO, GRASS_HI, (dw - 1.5) / 22);
+                        }
+                        // Relyef: asl rasm yorqinligining shimoli-g'arbiy qo'shniga nisbatan farqi.
+                        var nw = (x > 0 && y > 0) ? lum[i - W - 1] : lum[i];
+                        var sh = (lum[i] - nw) * 5;
+                        sh = sh < -0.22 ? -0.22 : sh > 0.22 ? 0.22 : sh;
+                        var f = (1 + sh) * (0.97 + 0.06 * hash(x, y));
+                        c = [c[0] * f, c[1] * f, c[2] * f];
+                        // Xarita chetiga tegib turgan quruqlik ham fonga sekin singib ketadi.
+                        var ledge = Math.min(x, y, W - 1 - x, H - 1 - y);
+                        if (ledge < 12) {
+                            c = mix(DEEP, c, 0.4 + 0.6 * ledge / 12);
+                        }
+                    }
+                    var o = i * 4;
+                    out[o] = c[0];
+                    out[o + 1] = c[1];
+                    out[o + 2] = c[2];
+                    out[o + 3] = 255;
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+        }
+        var api = {
+            on: false,
+            // aE.a6m() dan keyin, faqat ssenariy o'yinida chaqiriladi.
+            start: function() {
+                api.on = false;
+                canvas = null;
+                if (aE.a2G === 2 || !aE.lE || aE.hi) {
+                    return;
+                }
+                build();
+                api.on = true;
+                bi.ds = true;
+            },
+            stop: function() {
+                api.on = false;
+                canvas = null;
+            },
+            background: function(ctx) {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.fillStyle = BG;
+                ctx.fillRect(0, 0, i.j, i.k);
+            },
+            image: function() {
+                return canvas;
+            },
+            // O'yin boshidagi oq yorug'lik doiralari o'rniga: faqat o'yinchi davlati atrofida aniq burchak-qavslar.
+            marker: function(ctx) {
+                var left = bS.z.aXE;
+                var p = aE.fJ;
+                if (left === 0 || p < 0 || p >= aE.fW || ah.nU[p] === 0 || ah.hN[p] === 0) {
+                    return;
+                }
+                var x0 = (ah.jS[p] - 3) * im - jD, x1 = (ah.jT[p] + 4) * im - jD;
+                var y0 = (ah.jU[p] - 3) * im - jE, y1 = (ah.jV[p] + 4) * im - jE;
+                var minS = 40;
+                if (x1 - x0 < minS) {
+                    var cx = (x0 + x1) / 2;
+                    x0 = cx - minS / 2;
+                    x1 = cx + minS / 2;
+                }
+                if (y1 - y0 < minS) {
+                    var cy = (y0 + y1) / 2;
+                    y0 = cy - minS / 2;
+                    y1 = cy + minS / 2;
+                }
+                x0 = Math.round(x0);
+                x1 = Math.round(x1);
+                y0 = Math.round(y0);
+                y1 = Math.round(y1);
+                var len = Math.max(8, Math.round(Math.min(x1 - x0, y1 - y0) * 0.28)), t = 3;
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.globalAlpha = Math.min(left / 580, 1);
+                for (var pass = 0; pass < 2; pass++) {
+                    var o = pass ? 0 : 2;
+                    ctx.fillStyle = pass ? "#5fd16a" : "#000";
+                    ctx.fillRect(x0 + o, y0 + o, len, t);
+                    ctx.fillRect(x0 + o, y0 + o, t, len);
+                    ctx.fillRect(x1 - len + o, y0 + o, len, t);
+                    ctx.fillRect(x1 - t + o, y0 + o, t, len);
+                    ctx.fillRect(x0 + o, y1 - t + o, len, t);
+                    ctx.fillRect(x0 + o, y1 - len + o, t, len);
+                    ctx.fillRect(x1 - len + o, y1 - t + o, len, t);
+                    ctx.fillRect(x1 - t + o, y1 - len + o, t, len);
+                }
+                ctx.globalAlpha = 1;
+            },
+            // Ekran chetlarini biroz qoraytiradi (bosh menyudagi vinyetka kabi, lekin yengilroq).
+            vignette: function(ctx) {
+                if (!vig || vigW !== i.j || vigH !== i.k) {
+                    vigW = i.j;
+                    vigH = i.k;
+                    vig = document.createElement("canvas");
+                    vig.width = vigW;
+                    vig.height = vigH;
+                    var v = vig.getContext("2d");
+                    var r = Math.max(vigW, vigH);
+                    var g = v.createRadialGradient(vigW / 2, vigH / 2, r * 0.35, vigW / 2, vigH / 2, r * 0.75);
+                    g.addColorStop(0, "rgba(3,14,22,0)");
+                    g.addColorStop(1, "rgba(3,14,22,0.45)");
+                    v.fillStyle = g;
+                    v.fillRect(0, 0, vigW, vigH);
+                }
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.drawImage(vig, 0, 0);
+            }
+        };
+        return api;
+    })();
+    // ---- Maxsus nuqtalar (hozircha faqat "Maxsus ssenariy" rejimida) ----
+    // Oltin koni: egasining daromadi +15% (ko'pi bilan 4 ta kon, +60%).
+    // Qal'a: atrofidagi hududga hujum qilish 30% qimmatroq (himoyachi zichligi bo'yicha).
+    // Nuqtalar xarita va seed'dan aniqlanadi, shuning uchun tiklangan o'yinda ham bir xil chiqadi.
+    var TTPoints = (function() {
+        var KEY = "tt-special-points";
+        var MINE = 0, FORT = 1;
+        var MINE_BONUS = 15, MINE_MAX = 4, FORT_BONUS = 30, FORT_R = 14;
+        var pts = [];
+        var owners = [];
+        var on = false;
+        function enabled() {
+            try {
+                return window.localStorage.getItem(KEY) !== "0";
+            } catch (e) {
+                return true;
+            }
+        }
+        function setEnabled(v) {
+            try {
+                window.localStorage.setItem(KEY, v ? "1" : "0");
+            } catch (e) {}
+        }
+        function rng(seed) {
+            var t = seed >>> 0;
+            return function() {
+                t = (t + 0x6D2B79F5) | 0;
+                var r = Math.imul(t ^ (t >>> 15), 1 | t);
+                r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+                return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+        // Nuqta atrofi (5x5) butunlay neytral quruqlik bo'lishi kerak: suv, tog' va boshqa davlat yonida emas.
+        function clear(x, y) {
+            for (var dy = -2; dy <= 2; dy++) {
+                for (var dx = -2; dx <= 2; dx++) {
+                    if (!ad.fQ(ad.zt(x + dx, y + dy))) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        function place() {
+            pts = [];
+            var W = bV.fk, H = bV.fl;
+            var land = 0;
+            for (var y = 0; y < H; y += 4) {
+                for (var x = 0; x < W; x += 4) {
+                    if (ad.fU(ad.zt(x, y))) {
+                        land += 16;
+                    }
+                }
+            }
+            var mines = Math.max(4, Math.min(16, Math.round(land / 12000)));
+            var forts = Math.max(2, Math.min(10, Math.round(mines * 0.6)));
+            var minD = Math.max(18, Math.floor(Math.sqrt(land / (mines + forts)) * 0.6));
+            var rand = rng((aE.data.mapSeed | 0) * 31 + W * 7919 + H);
+            var want = [mines, forts];
+            for (var type = 0; type < 2; type++) {
+                for (var tries = 0, got = 0; got < want[type] && tries < 6000; tries++) {
+                    var px = 4 + Math.floor(rand() * (W - 8));
+                    var py = 4 + Math.floor(rand() * (H - 8));
+                    if (!clear(px, py)) {
+                        continue;
+                    }
+                    var ok = true;
+                    for (var n = 0; n < pts.length && ok; n++) {
+                        ok = bO.zd(pts[n].x - px, pts[n].y - py) >= minD * minD;
+                    }
+                    if (ok) {
+                        pts.push({
+                            type: type,
+                            x: px,
+                            y: py,
+                            fD: ad.zt(px, py)
+                        });
+                        got++;
+                    }
+                }
+            }
+            owners = pts.map(function() {
+                return -1;
+            });
+        }
+        function ownerOf(p) {
+            return ad.h9(p.fD) ? ad.fR(p.fD) : -1;
+        }
+        var api = {
+            enabled: enabled,
+            setEnabled: setEnabled,
+            active: function() {
+                return on;
+            },
+            // aE.a6m() dan keyin chaqiriladi: xarita tayyor, botlar joylashgan.
+            start: function(force) {
+                on = false;
+                pts = [];
+                if (!(force || enabled()) || aE.a2G === 2 || !aE.lE || aE.hi) {
+                    return;
+                }
+                place();
+                on = pts.length > 0;
+                if (on) {
+                    var m = 0;
+                    pts.forEach(function(p) {
+                        m += p.type === MINE;
+                    });
+                    aO.a8a("Xaritada " + m + " ta oltin koni va " + (pts.length - m) + " ta qalʼa bor!");
+                }
+            },
+            stop: function() {
+                on = false;
+                pts = [];
+            },
+            // Daromad ko'paytiruvchisi (foizda, 100 = bonussiz).
+            income: function(player) {
+                if (!on) {
+                    return 100;
+                }
+                var n = 0;
+                for (var aC = pts.length - 1; aC >= 0; aC--) {
+                    if (pts[aC].type === MINE && owners[aC] === player) {
+                        n++;
+                    }
+                }
+                return 100 + MINE_BONUS * Math.min(n, MINE_MAX);
+            },
+            // Hujum qilinayotgan piksellarning qal'a himoyasidagi ulushiga qarab qo'shimcha narx.
+            defense: function(defender, cost, pixels, count) {
+                if (!on || cost <= 0) {
+                    return cost;
+                }
+                var fx = [], fy = [];
+                for (var aC = pts.length - 1; aC >= 0; aC--) {
+                    if (pts[aC].type === FORT && ownerOf(pts[aC]) === defender) {
+                        fx.push(pts[aC].x);
+                        fy.push(pts[aC].y);
+                    }
+                }
+                if (!fx.length) {
+                    return cost;
+                }
+                var near = 0, r2 = FORT_R * FORT_R, W = bV.fk;
+                for (var k = count - 1; k >= 0; k--) {
+                    var fL = bO.g0(pixels[k], 4) | 0;
+                    var x = fL % W, y = (fL - x) / W;
+                    for (var f = fx.length - 1; f >= 0; f--) {
+                        if (bO.zd(fx[f] - x, fy[f] - y) <= r2) {
+                            near++;
+                            break;
+                        }
+                    }
+                }
+                return cost + bO.g0(cost * FORT_BONUS * near, 100 * count);
+            },
+            // Har daromad tikida egalarni yangilaydi va o'yinchiga xabar beradi.
+            tick: function() {
+                if (!on) {
+                    return;
+                }
+                var me = aE.fJ;
+                for (var aC = pts.length - 1; aC >= 0; aC--) {
+                    var o = ownerOf(pts[aC]);
+                    if (o === owners[aC]) {
+                        continue;
+                    }
+                    var was = owners[aC];
+                    owners[aC] = o;
+                    bi.ds = true;
+                    var name = pts[aC].type === MINE ? "Oltin koni" : "Qalʼa";
+                    if (o === me) {
+                        aO.a8a(name + " egallandi! " + (pts[aC].type === MINE ? "Daromad +" + MINE_BONUS + "%" : "Atrofdagi mudofaa +" + FORT_BONUS + "%"));
+                    } else if (was === me) {
+                        aO.a8a(name + " yoʻqotildi!");
+                    }
+                }
+            },
+            draw: function(ctx) {
+                if (!on) {
+                    return;
+                }
+                var cell = Math.max(2, Math.min(5, Math.round(im * 0.9)));
+                var size = 9 * cell;
+                var b = Math.max(2, cell);
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.imageSmoothingEnabled = false;
+                for (var aC = 0; aC < pts.length; aC++) {
+                    var p = pts[aC];
+                    var sx = Math.round((p.x + 0.5) * im - jD - size / 2);
+                    var sy = Math.round((p.y + 0.5) * im - jE - size / 2);
+                    if (sx > i.j || sy > i.k || sx + size < 0 || sy + size < 0) {
+                        continue;
+                    }
+                    var o = owners[aC];
+                    ctx.fillStyle = "#000";
+                    ctx.fillRect(sx + b, sy + b, size, size);
+                    ctx.fillStyle = o >= 0 ? "rgb(" + ad.aJA[o] + "," + ad.aJB[o] + "," + ad.aJC[o] + ")" : "#4d6676";
+                    ctx.fillRect(sx, sy, size, size);
+                    ctx.fillStyle = "#020b12";
+                    ctx.fillRect(sx + b, sy + b, size - 2 * b, size - 2 * b);
+                    var art = ICON[p.type];
+                    for (var r = 0; r < 7; r++) {
+                        for (var c = 0; c < 7; c++) {
+                            var ch = art[r].charAt(c);
+                            if (ch === ".") {
+                                continue;
+                            }
+                            ctx.fillStyle = COLORS[p.type][ch];
+                            ctx.fillRect(sx + (c + 1) * cell, sy + (r + 1) * cell, cell, cell);
+                        }
+                    }
+                }
+            }
+        };
+        var ICON = [["..###..", ".#hh##.", "#hh####", "#h##s##", "####s##", ".#sss#.", "..###.."], ["#.#.#.#", "#######", ".#h###.", ".#h###.", ".##.##.", ".#...#.", ".#...#."]];
+        var COLORS = [{
+            "#": "#f2c14e",
+            "h": "#fff1b8",
+            "s": "#b8862a"
+        }, {
+            "#": "#b9c8d0",
+            "h": "#eef3f5"
+        }];
+        return api;
+    })();
     // Sahifa yangilanganda o'yinni tiklash.
     // Yakka o'yin: ssenariy + dvigatelning replay yozuvi (bC.re) sessionStorage'da saqlanadi,
     // qayta yuklanganda o'sha ssenariy boshlanib, yozilgan harakatlar bilan o'sha tikgacha tez aylantiriladi.
@@ -20944,6 +21422,7 @@
                     scenario: scenario,
                     a6k: aE.a6k,
                     tick: bi.kr(),
+                    sp: TTPoints.active(),
                     re: [re.aXu, re.aXv, re.aXw, re.aXx, re.aXy, re.aXz]
                 }));
             } catch (e) {}
@@ -21022,6 +21501,12 @@
             aE.a6i.a77();
             aE.a6m();
             aE.a6k = data.a6k;
+            if (data.a6k === 1) {
+                TTMap.start();
+            }
+            if (data.sp) {
+                TTPoints.start(true);
+            }
             scenario = data.scenario;
             var aeJ = data.re[0], gI = data.re[1], gK = data.re[2], gM = data.re[3], aeK = data.re[4], aeL = data.re[5];
             var g = 0, pos = 0, run = 0, target = data.tick;
@@ -21232,7 +21717,9 @@
                 mapIndex: opts.mapIndex,
                 mapName: opts.mapName,
                 maxPlayers: opts.maxPlayers,
-                botCount: opts.botCount
+                botCount: opts.botCount,
+                gameMode: opts.gameMode,
+                teamCount: opts.teamCount
             }).then(remember);
         }
         ;
@@ -21324,6 +21811,13 @@
         var selectedMap = 0;
         var maxPlayers = 8;
         var botCount = 200;
+        // O'yin janri: 0 — Battle Royale, 1 — jamoalar (2–4 ta jamoa).
+        var gameMode = 0;
+        var teamCount = 2;
+        var MODE_NAMES = ["Battle Royale", "Jamoalar"];
+        function modeText(room) {
+            return room.gameMode === 1 ? MODE_NAMES[1] + " (" + (room.teamCount || 2) + " ta)" : MODE_NAMES[0];
+        }
         // Sahifa yangilanganda xonaga/o'yinga qaytish uchun (faqat shu tab uchun).
         function saveRoom(code, token) {
             try {
@@ -21793,6 +22287,20 @@
             botsBox.appendChild(choiceRow([50, 100, 200, 500], botCount, String, function(v) {
                 botCount = v;
             }));
+            var modeBox = el("div", "tr-box");
+            modeBox.appendChild(iconEl("h3", "", "swords", "Oʻyin janri"));
+            modeBox.appendChild(choiceRow([0, 1], gameMode, function(v) {
+                return MODE_NAMES[v];
+            }, function(v) {
+                gameMode = v;
+                teamsBox.hidden = v !== 1;
+            }));
+            var teamsBox = el("div", "tr-box");
+            teamsBox.appendChild(iconEl("h3", "", "flag", "Jamoalar soni"));
+            teamsBox.appendChild(choiceRow([2, 3, 4], teamCount, String, function(v) {
+                teamCount = v;
+            }));
+            teamsBox.hidden = gameMode !== 1;
             var err = el("p", "tr-err");
             var createBtn = iconButton("home", "Xona yaratish", function() {
                 createBtn.disabled = true;
@@ -21804,7 +22312,9 @@
                     mapIndex: selectedMap,
                     mapName: names[selectedMap],
                     maxPlayers: maxPlayers,
-                    botCount: botCount
+                    botCount: botCount,
+                    gameMode: gameMode,
+                    teamCount: teamCount
                 }).then(function(res) {
                     session = {
                         code: res.room.code,
@@ -21817,7 +22327,7 @@
                     err.textContent = e.message;
                 });
             }, "tr-go");
-            open(["home", "Xona ochish"], [mapBox, playersBox, botsBox, err], [iconButton("back", "Orqaga", function() {
+            open(["home", "Xona ochish"], [mapBox, modeBox, teamsBox, playersBox, botsBox, err], [iconButton("back", "Orqaga", function() {
                 close();
             }), createBtn]);
         }
@@ -21908,7 +22418,7 @@
                 return p.host;
             })[0];
             var g = el("div", "tr-info");
-            [["Xarita", room.mapName], ["Yaratuvchi", host ? host.name : "—"], ["Oʻyinchilar", room.players.length + " / " + room.maxPlayers], ["Botlar", String(room.botCount)]].forEach(function(r) {
+            [["Xarita", room.mapName], ["Janr", modeText(room)], ["Yaratuvchi", host ? host.name : "—"], ["Oʻyinchilar", room.players.length + " / " + room.maxPlayers], ["Botlar", String(room.botCount)]].forEach(function(r) {
                 g.appendChild(el("span", "", r[0]));
                 g.appendChild(el("span", "", r[1]));
             });
@@ -22068,10 +22578,30 @@
                 aE.a6i.a7A();
                 clearRoom();
             }
+            // Jamoa janri: dvigatel odamlarni tanlagan rangiga eng yaqin jamoaga taqsimlaydi,
+            // qolgan o'rinlarni botlar teng to'ldiradi (barcha mijozlarda bir xil natija).
+            // Jamoalar faqat odamlar uchun: botlar 0-guruhda (hammaga qarshi, Battle Royale'dagidek).
+            // Jamoalar soni odamlar sonidan oshmaydi, aks holda bo'sh jamoa qolardi.
+            if (room.gameMode === 1 && humans > 1 && myIndex >= 0) {
+                var teams = Math.max(2, Math.min(4, room.teamCount || 2, humans));
+                sC.gameMode = 1;
+                sC.battleRoyaleMode = 0;
+                sC.teamPlayerCount = new Uint16Array(9);
+                sC.teamPlayerCount[0] = sC.playerCount - humans;
+                for (aC = 1; aC <= teams; aC++) {
+                    sC.teamPlayerCount[aC] = Math.floor(humans / teams) + (aC <= humans % teams ? 1 : 0);
+                }
+                sC.numberTeams = teams;
+            }
             ab.aIa();
             aE.a6i.a77();
             sC.canvas = null;
-            aE.a6m();
+            TTRoomTeams = sC.gameMode === 1 && humans > 1;
+            try {
+                aE.a6m();
+            } finally {
+                TTRoomTeams = false;
+            }
             aE.a6k = 0;
             if (game) {
                 var queued = game.queue;
@@ -25650,6 +26180,8 @@
             aE.data.canvas = aE.data.mapType === 2 ? bV.yn : null;
             aE.a6m();
             aE.a6k = 1;
+            TTMap.start();
+            TTPoints.start();
         }
         function aRd() {
             var sF = [];
@@ -25664,6 +26196,7 @@
             aTK(sF);
             aTL(sF);
             aTM(sF);
+            aTSP(sF);
             aTN(sF);
             return sF;
         }
@@ -25825,6 +26358,18 @@
                 u.v(28);
             }
             ).button]));
+            sF.push(aQh);
+        }
+        function aTSP(sF) {
+            var aQh = new rx();
+            aQh.s0("Maxsus nuqtalar");
+            aQh.s8(new wY({
+                oM: ["Yoqilgan", "Oʻchirilgan"],
+                value: TTPoints.enabled() ? 0 : 1
+            },function(eI) {
+                TTPoints.setEnabled(eI === 0);
+            }
+            ));
             sF.push(aQh);
         }
         function aTN(sF) {
@@ -33895,6 +34440,8 @@
             } else {
                 if (aE.lE) {
                     add();
+                } else if (TTRoomTeams) {
+                    roomTeams();
                 } else {
                     this.ee();
                 }
@@ -33933,6 +34480,61 @@
             this.adl();
         }
         ;
+        // Xona (do'stlar bilan) jamoa o'yini: jamoalar faqat odamlar uchun.
+        // Odamlar o'z rangiga eng yaqin jamoaga teng (va hech bir jamoa bo'sh qolmaydigan qilib) taqsimlanadi.
+        // Botlar 0-guruhda qoladi: bj.fX = 0 hammaga dushman, ya'ni ular Battle Royale'dagidek o'ynaydi.
+        // Hammasi faqat xona ma'lumotidan hisoblanadi, shuning uchun har bir mijozda natija bir xil.
+        function roomTeams() {
+            var aSp = bj.aSp;
+            var colorsData = aE.data.colorsData;
+            var tpc = aE.data.teamPlayerCount;
+            var lH = bj.lH;
+            var fX = bj.fX;
+            var active = [];
+            lH[0] = 0;
+            for (var c = 1; c < 9; c++) {
+                if (tpc[c]) {
+                    active.push(c);
+                    lH[active.length] = c;
+                }
+            }
+            var n = active.length;
+            var humans = aE.ku;
+            var cap = Math.ceil(humans / n);
+            var hCount = new Uint16Array(n + 1);
+            for (var h = 0; h < humans; h++) {
+                var code = colorsData[h];
+                var rgb = [4 * (code >> 12), 4 * ((code >> 6) & 63), 4 * (code & 63)];
+                var order = active.map(function(t, k) {
+                    return {
+                        k: k + 1,
+                        d: Math.abs(aSp[t][0] - rgb[0]) + Math.abs(aSp[t][1] - rgb[1]) + Math.abs(aSp[t][2] - rgb[2])
+                    };
+                }).sort(function(a, b) {
+                    return a.d - b.d || a.k - b.k;
+                });
+                var left = humans - h - 1;
+                var empty = 0;
+                for (var e = 1; e <= n; e++) {
+                    empty += hCount[e] === 0;
+                }
+                var pick = -1;
+                for (var o = 0; o < order.length && pick < 0; o++) {
+                    var t = order[o].k;
+                    if (hCount[t] < cap && empty - (hCount[t] === 0) <= left) {
+                        pick = t;
+                    }
+                }
+                if (pick < 0) {
+                    pick = order[0].k;
+                }
+                hCount[pick]++;
+                fX[h] = pick;
+            }
+            for (var b = humans; b < aE.fW; b++) {
+                fX[b] = 0;
+            }
+        }
         function add() {
             var aSp = bj.aSp;
             var colorsData = aE.data.colorsData;

@@ -9,6 +9,9 @@ const WS_PATH = "/ws";
 // Bo'sh bo'lsa, istalgan sayt ulanishi mumkin.
 const ALLOWED_ORIGINS = String(process.env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
 const MAX_PLAYER_OPTIONS = [2, 4, 8, 16];
+// O'yin janri: 0 — Battle Royale (hamma hammaga qarshi), 1 — jamoalar.
+const GAME_MODE_BATTLE_ROYALE = 0;
+const GAME_MODE_TEAMS = 1;
 // Xonada (o'yin boshlanmagan) aloqa uzilsa, o'rin shu vaqt saqlanadi — sahifani yangilash uchun.
 const ROOM_GRACE_MS = 20000;
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 3;
@@ -173,7 +176,9 @@ export async function attachRooms(httpServer) {
                 mapIndex: int(msg.mapIndex, 0, 63),
                 mapName: String(msg.mapName || "").slice(0, 40),
                 maxPlayers,
-                botCount: int(msg.botCount, 0, 511)
+                botCount: int(msg.botCount, 0, 511),
+                gameMode: int(msg.gameMode ?? GAME_MODE_BATTLE_ROYALE, GAME_MODE_BATTLE_ROYALE, GAME_MODE_TEAMS),
+                teamCount: int(msg.teamCount ?? 2, 2, 4)
             });
             watch(ws, room.code);
             setAuthor(ws, player);
