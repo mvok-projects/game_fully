@@ -18427,7 +18427,45 @@
         var aMG;
         var aCg = 112;
         var aMH = 0;
+        // Davlat yorliqlari bosh menyu dizaynida (hozircha faqat bitta o'yinchi rejimida).
+        var ttL = false;
+        function lFont(type, size) {
+            return ttL ? ttFont(type === 1 ? "700" : "600", size) : bD.sK.u8(type, size);
+        }
+        // Oq matn, qora kontur va qattiq soya (menyudagi "4px 4px 0 #000" uslubi).
+        function ttLabel(ib, text, x, y, fontSize, fill) {
+            ib.globalAlpha = fontSize >= aLw && fontSize < aLv ? aMj(fontSize) : 1;
+            var off = Math.max(1, Math.round(0.08 * fontSize));
+            ib.lineJoin = "round";
+            ib.lineWidth = Math.max(2, 0.2 * fontSize);
+            ib.strokeStyle = "#000";
+            ib.strokeText(text, x + off, y + off);
+            ib.strokeText(text, x, y);
+            ib.fillStyle = fill;
+            ib.fillText(text, x, y);
+            ib.globalAlpha = 1;
+        }
+        var TT_TINT = ["#ffffff", "#ffffff", "#ff6b5e", "#ff6b5e", "#5fd16a", "#5fd16a", "#ffb3ab", "#ffb3ab", "#b4f0b9", "#b4f0b9"];
+        function ttName(aC, fontSize, fg, fi, ib) {
+            ttLabel(ib, ah.a0j[aC], fg, fi, fontSize, "#ffffff");
+            if (aC < aE.ku && ah.a5a[aC] !== 2) {
+                return;
+            }
+            // Bot belgisi: nom ostidagi qisqa chiziq.
+            var w = Math.round(0.3 * fontSize / aLu[aC]), h = Math.max(1, Math.round(0.08 * fontSize)), y = Math.round(fi + 0.5 * fontSize), b = Math.max(1, Math.round(0.04 * fontSize));
+            ib.globalAlpha = fontSize >= aLw && fontSize < aLv ? aMj(fontSize) : 1;
+            ib.fillStyle = "#000";
+            ib.fillRect(Math.round(fg - w / 2) - b, y - b, w + 2 * b, h + 2 * b);
+            ib.fillStyle = "#ffffff";
+            ib.fillRect(Math.round(fg - w / 2), y, w, h);
+            ib.globalAlpha = 1;
+        }
+        function ttTroops(ib, aC, fontSize, aMU, aMV, aMW) {
+            var a5j = ah.a5j[aC];
+            ttLabel(ib, bD.tI.a1X(ah.hb[aC] - a5j), aMU, aMV, fontSize, a5j ? TT_TINT[2] : TT_TINT[aMW] || "#ffffff");
+        }
         this.dk = function() {
+            ttL = aE.a2G !== 2 && aE.lE;
             aMH = bm.buffer.data[7].value || aE.lC === 8;
             aM4 = false;
             aM0 = 0.88;
@@ -18458,6 +18496,19 @@
                 aMI();
             }
             aMK();
+            // Shrift hali yuklanmagan bo'lsa, o'lchamlar yuklangach qayta hisoblanadi.
+            if (ttL && document.fonts && !document.fonts.check(ttFont("700", 16))) {
+                document.fonts.load(ttFont("700", 16)).then(function() {
+                    if (!ttL) {
+                        return;
+                    }
+                    aMI();
+                    if (aMH) {
+                        aMJ();
+                    }
+                    aMC = true;
+                }).catch(function() {});
+            }
         }
         ;
         this.aLZ = function(h7, a7D) {
@@ -18506,9 +18557,9 @@
         }
         function aMI() {
             var aC, aMN;
-            ws.font = bD.sK.u8(1, 100 * aLx);
+            ws.font = lFont(1, 100 * aLx);
             aMN = 80 / Math.floor(ws.measureText(bD.tI.a1X(aE.a5m)).width);
-            ws.font = bD.sK.u8(1, 100);
+            ws.font = lFont(1, 100);
             for (aC = aE.fW - 1; aC >= 0; aC--) {
                 aLu[aC] = 100 / Math.floor(ws.measureText(ah.a0j[aC]).width);
                 aLt[aC] = Math.min(aMN, aLu[aC]);
@@ -18516,7 +18567,7 @@
         }
         function aMJ() {
             var aC, aMN;
-            ws.font = bD.sK.u8(1, 100);
+            ws.font = lFont(1, 100);
             aMN = 100 / Math.floor(ws.measureText("900 000").width);
             for (aC = aE.fW - 1; aC >= 0; aC--) {
                 aLt[aC] = Math.min(aMN, 2 * aLu[aC]);
@@ -18702,9 +18753,16 @@
                 aMU = Math.floor(i.j * (aLp[aC] + aLr[aC] / 2 - nv) / (o8 - nv));
                 aMV = Math.floor(i.k * (aLq[aC] + aLs[aC] / 2 - nw) / (o9 - nw) - 0.1 * fontSize);
                 aMW = ad.aAb[aC];
-                ib.font = bD.sK.u8(ah.a5a[aC] === 1 ? 4 : 1, fontSize);
+                ib.font = ttL ? ttFont("700", fontSize) : bD.sK.u8(ah.a5a[aC] === 1 ? 4 : 1, fontSize);
                 ib.fillStyle = aMZ(fontSize, aMW % 2);
-                if (aMH) {
+                if (ttL) {
+                    if (aMH) {
+                        ttTroops(ib, aC, fontSize, aMU, aMV, aMW);
+                    } else {
+                        ttName(aC, fontSize, aMU, aMV, ib);
+                    }
+                    ib.fillStyle = "#ffffff";
+                } else if (aMH) {
                     aMa(ib, aC, fontSize, aMU, aMV, aMW);
                 } else {
                     aMb(aC, fontSize, aMU, aMV, ib);
@@ -18722,9 +18780,15 @@
                 if (aMX < aLz) {
                     continue;
                 }
-                ib.font = bD.sK.u8(1, aMX);
-                aMV += Math.floor(0.78 * fontSize);
-                if (aMH) {
+                ib.font = lFont(1, aMX);
+                aMV += Math.floor((ttL ? 0.98 : 0.78) * fontSize);
+                if (ttL) {
+                    if (aMH) {
+                        ttName(aC, aMX, aMU, aMV, ib);
+                    } else {
+                        ttTroops(ib, aC, aMX, aMU, aMV, aMW);
+                    }
+                } else if (aMH) {
                     aMb(aC, aMX, aMU, aMV, ib);
                 } else {
                     aMa(ib, aC, aMX, aMU, aMV, aMW);
@@ -22424,6 +22488,66 @@
                 return (v < 16 ? "0" : "") + v.toString(16);
             }).join("");
         }
+        function rgbHex(c) {
+            return "#" + c.map(function(v) {
+                v = Math.round(v);
+                return (v < 16 ? "0" : "") + v.toString(16);
+            }).join("");
+        }
+        // Rang tanlagich holati HSV da: h 0..360, s va v 0..1.
+        function hsvHex(h, sat, v) {
+            var f = function(n) {
+                var k = (n + h / 60) % 6;
+                return (v - v * sat * Math.max(0, Math.min(k, 4 - k, 1))) * 255;
+            };
+            return rgbHex([f(5), f(3), f(1)]);
+        }
+        function hexHsv(h) {
+            var c = hex(h).map(function(v) {
+                return v / 255;
+            });
+            var mx = Math.max(c[0], c[1], c[2]), d = mx - Math.min(c[0], c[1], c[2]), hue = 0;
+            if (d) {
+                hue = mx === c[0] ? ((c[1] - c[2]) / d + 6) % 6 : mx === c[1] ? (c[2] - c[0]) / d + 2 : (c[0] - c[1]) / d + 4;
+            }
+            return [hue * 60, mx ? d / mx : 0, mx];
+        }
+        // Top ranglar: o'yinchi eng ko'p tanlagan ranglar (brauzerda saqlanadi), yetmasa standart ranglar bilan to'ldiriladi.
+        var TOP_N = 8, TOP_KEY = "tt-top-colors";
+        function readTop() {
+            try {
+                var o = JSON.parse(window.localStorage.getItem(TOP_KEY) || "{}");
+                return o && typeof o === "object" ? o : {};
+            } catch (e) {
+                return {};
+            }
+        }
+        function bumpTop(h) {
+            var o = readTop();
+            var k = fromCode(toCode(h));
+            o[k] = {
+                n: ((o[k] && o[k].n) || 0) + 1,
+                t: Date.now()
+            };
+            try {
+                window.localStorage.setItem(TOP_KEY, JSON.stringify(o));
+            } catch (e) {}
+        }
+        function topColors() {
+            var o = readTop();
+            var list = Object.keys(o).filter(function(k) {
+                return /^#[0-9a-f]{6}$/.test(k) && o[k] && o[k].n > 0;
+            }).sort(function(a, b) {
+                return o[b].n - o[a].n || o[b].t - o[a].t;
+            }).slice(0, TOP_N);
+            for (var n = 0; list.length < TOP_N && n < COLORS.length; n++) {
+                var d = fromCode(toCode(COLORS[n]));
+                if (list.indexOf(d) < 0) {
+                    list.push(d);
+                }
+            }
+            return list;
+        }
         function injectStyle() {
             if (document.getElementById("tt-menu-style")) {
                 return;
@@ -22454,10 +22578,23 @@
                 ".mm-name i{width:12px;align-self:stretch;flex:none}",
                 ".mm-name input{flex:1;min-width:0;height:100%;box-sizing:border-box;background:transparent;border:none;color:#fff;font-family:inherit;font-size:22px;font-weight:600;padding:0 14px;outline:none;-webkit-user-select:text;user-select:text}",
                 ".mm-name input::placeholder{color:#6f8796}",
-                ".mm-sw{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px}",
+                ".mm-sw{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px}",
                 ".mm-sw button{aspect-ratio:1;padding:0;cursor:pointer;border:2px solid rgba(0,0,0,0.4);transition:transform .1s}",
                 ".mm-sw button:hover{transform:translateY(-2px)}",
                 ".mm-sw button[aria-pressed=true]{border-color:#fff}",
+                ".mm-sw .mm-cpb{grid-column:9;background:conic-gradient(#f2564b,#f2c14e,#5fd16a,#3fb6c4,#6a6cf0,#e8508f,#f2564b);display:flex;align-items:center;justify-content:center;color:#fff}",
+                ".mm-sw .mm-cpb svg{filter:drop-shadow(1px 1px 0 #000)}",
+                ".mm-cp{background:#020b12;border:2px solid #2a3f4c;display:flex;flex-direction:column}",
+                ".mm-cp[hidden]{display:none}",
+                ".mm-cp-hd{display:flex;align-items:center;justify-content:center;gap:10px;height:40px;border-bottom:2px solid #2a3f4c}",
+                ".mm-cp-hd input{width:9ch;background:transparent;border:none;color:#fff;font-family:inherit;font-size:18px;font-weight:600;outline:none;text-transform:lowercase;-webkit-user-select:text;user-select:text}",
+                ".mm-cp-bd{display:flex;gap:12px;padding:12px;height:170px}",
+                ".mm-cp-sv,.mm-cp-h{position:relative;cursor:crosshair;touch-action:none}",
+                ".mm-cp-sv{flex:1;background-image:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent)}",
+                ".mm-cp-h{width:24px;flex:none;background:linear-gradient(to bottom,#f00 0%,#ff0 16.67%,#0f0 33.33%,#0ff 50%,#00f 66.67%,#f0f 83.33%,#f00 100%)}",
+                ".mm-cp-sv i{position:absolute;width:14px;height:14px;margin:-9px 0 0 -9px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,0.6);pointer-events:none}",
+                ".mm-cp-h i{position:absolute;left:-3px;right:-3px;height:4px;margin-top:-4px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,0.6);pointer-events:none}",
+                ".mm-cp-sv:focus-visible,.mm-cp-h:focus-visible{outline:2px solid #5fd16a;outline-offset:2px}",
                 ".mm-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}",
                 ".mm-act{height:clamp(84px,15vh,118px);color:#fff;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding:14px 16px;font-family:inherit;box-shadow:4px 4px 0 #000;transition:transform .12s,box-shadow .12s,background .12s;border:2px solid}",
                 ".mm-act:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000}",
@@ -22555,20 +22692,33 @@
             field.appendChild(nameRow);
             var sw = el("div", "mm-sw");
             sw.setAttribute("role", "group");
-            sw.setAttribute("aria-label", "Rang");
-            var swatches = COLORS.map(function(h) {
-                var b = el("button");
-                b.type = "button";
-                b.style.background = h;
-                b.setAttribute("aria-label", "Rang " + h);
-                b.addEventListener("click", function() {
-                    bm.qo.qp(121, toCode(h));
-                    setColor(h);
-                });
-                sw.appendChild(b);
-                return b;
-            });
+            sw.setAttribute("aria-label", "Top ranglar");
+            var swatches = [];
+            for (var n = 0; n < TOP_N; n++) {
+                (function(b) {
+                    b.type = "button";
+                    b.addEventListener("click", function() {
+                        commit(b.dataset.c, true);
+                    });
+                    sw.appendChild(b);
+                    swatches.push(b);
+                })(el("button"));
+            }
+            var cpb = el("button", "mm-cpb");
+            cpb.type = "button";
+            cpb.setAttribute("aria-label", "Oʻz rangingizni tanlang");
+            cpb.setAttribute("aria-expanded", "false");
+            cpb.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square" aria-hidden="true"><path d="M12 4v16M4 12h16"></path></svg>';
+            sw.appendChild(cpb);
             field.appendChild(sw);
+            var cp = buildPicker();
+            cp.hidden = true;
+            field.appendChild(cp);
+            cpb.addEventListener("click", function() {
+                cp.hidden = !cp.hidden;
+                cpb.setAttribute("aria-expanded", String(!cp.hidden));
+                cpb.setAttribute("aria-pressed", String(!cp.hidden));
+            });
             card.appendChild(field);
             var acts = el("div", "mm-acts");
             var buttons = TITLES.map(function(t, n) {
@@ -22621,8 +22771,10 @@
                 dot: dot,
                 flags: logo.querySelectorAll(".mm-flag i"),
                 swatches: swatches,
+                picker: cp,
                 buttons: buttons
             };
+            renderTop();
             len.textContent = input.value.length + "/20";
             canvas.width = W;
             canvas.height = H;
@@ -22630,18 +22782,178 @@
             var g1 = bm.buffer.data[121].value;
             setColor(g1 >= 0 ? fromCode(g1) : COLORS[0], true);
         }
-        function setColor(h, init) {
+        // Tanlangan rangni dvigatelga saqlaydi va top ranglar hisobiga qo'shadi.
+        function commit(h, fromTop) {
+            bm.qo.qp(121, toCode(h));
+            bumpTop(h);
+            setColor(h);
+            if (!fromTop) {
+                renderTop();
+            }
+        }
+        function renderTop() {
+            var list = topColors();
+            refs.swatches.forEach(function(b, idx) {
+                b.dataset.c = list[idx];
+                b.style.background = list[idx];
+                b.setAttribute("aria-label", "Rang " + list[idx]);
+            });
+            setColor(color, true);
+        }
+        var hsv = [0, 0, 1];
+        function buildPicker() {
+            var cp = el("div", "mm-cp");
+            var hd = el("div", "mm-cp-hd");
+            hd.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="#fff" stroke-width="2"></circle><path d="M12 2a10 10 0 0 0 0 20z" fill="#fff"></path></svg>';
+            var hexIn = el("input");
+            hexIn.type = "text";
+            hexIn.maxLength = 7;
+            hexIn.spellcheck = false;
+            hexIn.autocomplete = "off";
+            hexIn.setAttribute("aria-label", "Rang kodi");
+            hd.appendChild(hexIn);
+            cp.appendChild(hd);
+            var bd = el("div", "mm-cp-bd");
+            var sv = el("div", "mm-cp-sv");
+            var svDot = el("i");
+            sv.appendChild(svDot);
+            var hue = el("div", "mm-cp-h");
+            var hueBar = el("i");
+            hue.appendChild(hueBar);
+            [[sv, "Toʻyinganlik va yorqinlik"], [hue, "Rang tusi"]].forEach(function(p) {
+                p[0].tabIndex = 0;
+                p[0].setAttribute("role", "slider");
+                p[0].setAttribute("aria-label", p[1]);
+            });
+            bd.appendChild(sv);
+            bd.appendChild(hue);
+            cp.appendChild(bd);
+            function apply(done) {
+                var h = hsvHex(hsv[0], hsv[1], hsv[2]);
+                if (done) {
+                    commit(h);
+                } else {
+                    setColor(h, false, true);
+                }
+            }
+            function drag(target, move) {
+                target.addEventListener("pointerdown", function(e) {
+                    e.preventDefault();
+                    target.focus();
+                    target.setPointerCapture(e.pointerId);
+                    var at = function(ev) {
+                        var r = target.getBoundingClientRect();
+                        move(Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height)));
+                        apply(false);
+                    };
+                    var up = function(ev) {
+                        target.removeEventListener("pointermove", at);
+                        target.removeEventListener("pointerup", up);
+                        target.removeEventListener("pointercancel", up);
+                        apply(true);
+                    };
+                    at(e);
+                    target.addEventListener("pointermove", at);
+                    target.addEventListener("pointerup", up);
+                    target.addEventListener("pointercancel", up);
+                });
+            }
+            drag(sv, function(x, y) {
+                hsv[1] = x;
+                hsv[2] = 1 - y;
+            });
+            drag(hue, function(x, y) {
+                hsv[0] = y * 360;
+            });
+            // Klaviatura: strelkalar bilan siljitish (Shift bilan kattaroq qadam).
+            function keys(target, step) {
+                target.addEventListener("keydown", function(e) {
+                    var d = {
+                        ArrowLeft: [-1, 0],
+                        ArrowRight: [1, 0],
+                        ArrowUp: [0, -1],
+                        ArrowDown: [0, 1]
+                    }[e.key];
+                    e.stopPropagation();
+                    if (!d) {
+                        return;
+                    }
+                    e.preventDefault();
+                    step(d[0] * (e.shiftKey ? 0.1 : 0.02), d[1] * (e.shiftKey ? 0.1 : 0.02));
+                    apply(false);
+                });
+                target.addEventListener("keyup", function(e) {
+                    if (/^Arrow/.test(e.key)) {
+                        apply(true);
+                    }
+                });
+            }
+            var clamp = function(v) {
+                return Math.min(1, Math.max(0, v));
+            };
+            keys(sv, function(dx, dy) {
+                hsv[1] = clamp(hsv[1] + dx);
+                hsv[2] = clamp(hsv[2] - dy);
+            });
+            keys(hue, function(dx, dy) {
+                hsv[0] = (hsv[0] + (dy || dx) * 360 + 360) % 360;
+            });
+            hexIn.addEventListener("focus", function() {
+                i.uG++;
+            });
+            hexIn.addEventListener("blur", function() {
+                i.uG--;
+                var v = hexIn.value.trim().toLowerCase().replace(/^#?/, "#");
+                if (/^#[0-9a-f]{3}$/.test(v)) {
+                    v = "#" + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+                }
+                if (/^#[0-9a-f]{6}$/.test(v)) {
+                    if (v !== color) {
+                        commit(v);
+                    }
+                } else {
+                    hexIn.value = color;
+                }
+            });
+            hexIn.addEventListener("keydown", function(e) {
+                e.stopPropagation();
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    hexIn.blur();
+                }
+            });
+            cp.sync = function(h, keepHsv) {
+                if (!keepHsv) {
+                    var n = hexHsv(h);
+                    // Kulrang ranglarda tus aniqlanmaydi: avvalgi tusni saqlab qolamiz.
+                    hsv = [n[1] && n[2] ? n[0] : hsv[0], n[2] ? n[1] : hsv[1], n[2]];
+                }
+                if (document.activeElement !== hexIn) {
+                    hexIn.value = h;
+                }
+                sv.style.backgroundColor = hsvHex(hsv[0], 1, 1);
+                svDot.style.left = hsv[1] * 100 + "%";
+                svDot.style.top = (1 - hsv[2]) * 100 + "%";
+                svDot.style.background = h;
+                hueBar.style.top = hsv[0] / 360 * 100 + "%";
+                sv.setAttribute("aria-valuetext", h);
+                hue.setAttribute("aria-valuenow", String(Math.round(hsv[0])));
+            };
+            return cp;
+        }
+        function setColor(h, init, fromPicker) {
             color = h;
             var code = toCode(h);
+            refs.picker.sync(h, fromPicker);
             refs.stripe.style.background = h;
             refs.dot.style.color = h;
             Array.prototype.forEach.call(refs.flags, function(c) {
                 c.style.background = c.dataset.v === "1" ? h : c.dataset.v === "2" ? "#ffffff" : "transparent";
             });
-            refs.swatches.forEach(function(b, idx) {
-                var on = toCode(COLORS[idx]) === code;
+            refs.swatches.forEach(function(b) {
+                var on = toCode(b.dataset.c) === code;
                 b.setAttribute("aria-pressed", String(on));
-                b.style.boxShadow = on ? "0 0 0 2px #020b12, 0 0 12px " + COLORS[idx] : "none";
+                b.style.boxShadow = on ? "0 0 0 2px #020b12, 0 0 12px " + b.dataset.c : "none";
             });
             if (map && !init) {
                 map.seeds[0].c = hex(h);
